@@ -1,4 +1,5 @@
 "use client";
+import type { GameData } from "@/types/chess";
 import { useState } from "react";
 import { ChessBoard } from "~/components/ChessBoard";
 import { MoveExplanation } from "~/components/MoveExplanation";
@@ -14,6 +15,29 @@ const App = () => {
     setCurrentMoveIndex(moveIndex);
   };
 
+  const isGameValid = (game: GameData) => {
+    if (!game || !game.moves || game.moves.length === 0) {
+      return false;
+    }
+    if (!game.title || !game.description) {
+      return false;
+    }
+    for (const move of game.moves) {
+      if (!move.fen || !move.explanation) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  if (!isGameValid(game)) {
+    return <div className="text-red-500 text-center">Game data error.</div>;
+  }
+
+  if (!game.moves[currentMoveIndex]) {
+    return <div className="text-red-500 text-center">Invalid move index.</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto">
@@ -21,7 +45,7 @@ const App = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="flex justify-center">
-            <ChessBoard fen={game.moves[currentMoveIndex].fen} />
+          <ChessBoard fen={game.moves[currentMoveIndex].fen} />
           </div>
           
           <div className="flex flex-col gap-4">
