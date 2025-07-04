@@ -32,15 +32,31 @@ const GamePage = (game: GameData) => {
 
   return (
     <>
-      <ChessBoard fen={game.moves[currentMoveIndex].fen} />
-      <h2 className="mb-2 text-xl font-semibold">{game.title}</h2>
+      <div className="flex h-screen flex-row">
+        <div className="flex w-2/5 items-center justify-center">
+          <ChessBoard
+            fen={game.moves[currentMoveIndex].fen}
+            className="content-around"
+          />
+        </div>
 
-      <MoveExplanation move={game.moves[currentMoveIndex]} />
-      <MoveNavigation
-        currentMove={currentMoveIndex}
-        totalMoves={game.moves.length}
-        onMoveChange={handleMoveChange}
-      />
+        <section className="flex flex-1 grow flex-col items-center">
+          <h2 className="mb-2 p-6 text-center text-2xl font-semibold">
+            {game.title}
+          </h2>
+
+          <MoveExplanation
+            move={game.moves[currentMoveIndex]}
+            className="max-w-4/5S h-auto w-full max-w-4/5"
+          />
+          <MoveNavigation
+            currentMove={currentMoveIndex}
+            totalMoves={game.moves.length}
+            onMoveChange={handleMoveChange}
+            className="mt-auto mb-12 p-12"
+          />
+        </section>
+      </div>
     </>
   );
 };

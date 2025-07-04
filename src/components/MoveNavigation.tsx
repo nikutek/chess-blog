@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -6,11 +5,22 @@ interface MoveNavigationProps {
   currentMove: number;
   totalMoves: number;
   onMoveChange: (moveIndex: number) => void;
+  className?: string;
 }
 
-export function MoveNavigation({ currentMove, totalMoves, onMoveChange }: MoveNavigationProps) {
+export function MoveNavigation({
+  currentMove,
+  totalMoves,
+  onMoveChange,
+  className,
+}: MoveNavigationProps) {
   return (
-    <div className="flex items-center justify-center gap-4 mt-6">
+    <div
+      className={
+        "mt-6 flex items-center justify-center gap-8" +
+        (className ? ` ${className}` : "")
+      }
+    >
       <Button
         variant="outline"
         onClick={() => onMoveChange(currentMove - 1)}
@@ -20,11 +30,11 @@ export function MoveNavigation({ currentMove, totalMoves, onMoveChange }: MoveNa
         <ChevronLeft className="h-4 w-4" />
         Previous Move
       </Button>
-      
+
       <span className="text-sm font-medium">
         {currentMove} / {totalMoves - 1}
       </span>
-      
+
       <Button
         variant="outline"
         onClick={() => onMoveChange(currentMove + 1)}

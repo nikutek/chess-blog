@@ -1,13 +1,14 @@
-
-import { useState, useEffect } from 'react';
-import { Chessboard } from 'react-chessboard';
+import { cleanRegex } from "node_modules/zod/dist/types/v4/core/util";
+import { useState, useEffect } from "react";
+import { Chessboard } from "react-chessboard";
 
 interface ChessBoardProps {
   fen: string;
   boardWidth?: number;
+  className?: string;
 }
 
-export function ChessBoard({ fen, boardWidth }: ChessBoardProps) {
+export function ChessBoard({ fen, boardWidth, className }: ChessBoardProps) {
   const [width, setWidth] = useState(boardWidth || 560);
 
   useEffect(() => {
@@ -24,22 +25,24 @@ export function ChessBoard({ fen, boardWidth }: ChessBoardProps) {
     };
 
     updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
   }, [boardWidth]);
 
   return (
-    <div className="chess-piece-transition">
-      <Chessboard 
+    <div
+      className={"chess-piece-transition" + (className ? ` ${className}` : "")}
+    >
+      <Chessboard
         id="chessboard"
         position={fen}
         boardWidth={width}
         customBoardStyle={{
-          borderRadius: '4px',
-          boxShadow: '0 5px 15px rgba(0, 0, 0, 0.15)'
+          borderRadius: "4px",
+          boxShadow: "0 5px 15px rgba(0, 0, 0, 0.15)",
         }}
-        customDarkSquareStyle={{ backgroundColor: '#b58863' }}
-        customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
+        customDarkSquareStyle={{ backgroundColor: "#b58863" }}
+        customLightSquareStyle={{ backgroundColor: "#f0d9b5" }}
         animationDuration={300}
       />
     </div>
