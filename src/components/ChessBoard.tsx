@@ -1,3 +1,4 @@
+"use client";
 import { cleanRegex } from "node_modules/zod/dist/types/v4/core/util";
 import { useState, useEffect } from "react";
 import { Chessboard } from "react-chessboard";

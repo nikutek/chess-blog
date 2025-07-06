@@ -1,11 +1,32 @@
+"use client";
 import { ChessBoard } from "@/components/ChessBoard";
 import { MoveExplanation } from "@/components/MoveExplanation";
 import { MoveNavigation } from "@/components/MoveNavigation";
+import { sampleGames, sicilianDefenseGame } from "@/data/sampleGames";
 import type { GameData } from "@/types/chess";
+import { useParams } from "next/navigation";
 import React, { useState } from "react";
+import { number } from "zod/v4";
 
-const GamePage = (game: GameData) => {
+interface GamePageProps {
+  params: { gameId: number };
+}
+
+const GamePage = () => {
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
+  const gameIdString = useParams<{ gameId: string }>()?.gameId;
+  const gameId = gameIdString ? parseInt(gameIdString, 10) : null;
+  // console.log(sampleGames[gameId]);
+  if (gameId === null) {
+    return <div className="text-center text-red-500">Invalid game ID.</div>;
+  }
+
+  if (!sampleGames[gameId]) {
+    return <div className="text-center text-red-500">Game not found.</div>;
+  }
+
+  const game: GameData = sampleGames[gameId];
+  console.log(gameId);
 
   const handleMoveChange = (moveIndex: number) => {
     setCurrentMoveIndex(moveIndex);
