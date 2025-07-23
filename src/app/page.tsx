@@ -1,18 +1,27 @@
 "use client";
 import type { GameData } from "@/types/chess";
-import { useState } from "react";
-import { ChessBoard } from "~/components/ChessBoard";
-import { MoveExplanation } from "~/components/MoveExplanation";
-import { MoveNavigation } from "~/components/MoveNavigation";
 import { sampleGames, sicilianDefenseGame } from "~/data/sampleGames";
 import GamePage from "./[gameId]/page";
 import Link from "next/link";
-const App = () => {
-  const games = sampleGames;
-  console.log(games);
+
+import { useQuery } from "@tanstack/react-query";
+
+const HomePage = () => {
+  // const games = sampleGames;
+  // console.log(games);
+  const { isPending, error, data } = useQuery({
+    queryKey: ["repoData"],
+    queryFn: () =>
+      fetch("http://localhost:8080/games").then((res) => res.json()),
+  });
+  if (isPending) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  console.log(data);
+
   return (
     <>
-      {sampleGames.map((game: GameData, index) => {
+      {data.map((game: GameData, index: number) => {
         return (
           <div key={index} className="flex flex-col gap-20">
             <Link href={`/${index}`}>
@@ -25,4 +34,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default HomePage;

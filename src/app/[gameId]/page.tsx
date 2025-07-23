@@ -4,28 +4,31 @@ import { MoveExplanation } from "@/components/MoveExplanation";
 import { MoveNavigation } from "@/components/MoveNavigation";
 import { sampleGames, sicilianDefenseGame } from "@/data/sampleGames";
 import type { GameData } from "@/types/chess";
+import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import React, { useState } from "react";
-import { number } from "zod/v4";
-
-interface GamePageProps {
-  params: { gameId: number };
-}
 
 const GamePage = () => {
-  const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
-  const gameIdString = useParams<{ gameId: string }>()?.gameId;
-  const gameId = gameIdString ? parseInt(gameIdString, 10) : null;
-  // console.log(sampleGames[gameId]);
-  if (gameId === null) {
+  const params = useParams();
+  if (!params || isNaN(Number(params.gameId))) {
     return <div className="text-center text-red-500">Invalid game ID.</div>;
   }
+
+  const gameId = Number(params.gameId);
+  const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
+  //TODO: Fetchowac ruchy
+
+  // const { isPending, error, data } = useQuery({
+  //   queryKey: ["gameData", gameId],
+  //   queryFn: () =>
+  //     fetch(`http://localhost:8080/games/${gameId}`).then((res) => res.json()),
+  // });
 
   if (!sampleGames[gameId]) {
     return <div className="text-center text-red-500">Game not found.</div>;
   }
 
-  const game: GameData = sampleGames[gameId];
+  const game: GameData = sampleGames[gameId] || sicilianDefenseGame;
   console.log(gameId);
 
   const handleMoveChange = (moveIndex: number) => {
