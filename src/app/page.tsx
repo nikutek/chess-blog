@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
 const HomePage = () => {
-  // const games = sampleGames;
+  // const data = sampleGames;
   // console.log(games);
   const { isPending, error, data } = useQuery({
     queryKey: ["repoData"],
@@ -21,10 +21,10 @@ const HomePage = () => {
 
   return (
     <>
-      {data.map((game: GameData, index: number) => {
+      {data.map((game: GameData) => {
         return (
-          <div key={index} className="flex flex-col gap-20">
-            <Link href={`/${index}`}>
+          <div key={game.gameID} className="flex flex-col gap-20">
+            <Link href={`/${game.gameID}`}>
               <h2>{game.title}</h2>
             </Link>
           </div>

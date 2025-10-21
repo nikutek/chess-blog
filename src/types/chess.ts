@@ -1,4 +1,3 @@
-
 export interface ChessMove {
   move: string;
   explanation: string;
@@ -6,7 +5,14 @@ export interface ChessMove {
 }
 
 export interface GameData {
+  gameID: string;
   title: string;
-  description: string;
   moves: ChessMove[];
+  description: string;
+  side: "WHITE" | "BLACK";
+  result: "WHITE_WIN" | "BLACK_WIN" | "DRAW";
+  tournamentName: string;
+  tournamentDate: string;
+  createdAt: string;
+  updatedAt: string;
 }

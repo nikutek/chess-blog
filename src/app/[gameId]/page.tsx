@@ -10,26 +10,22 @@ import React, { useState } from "react";
 
 const GamePage = () => {
   const params = useParams();
-  if (!params || isNaN(Number(params.gameId))) {
+
+  if (!params) {
     return <div className="text-center text-red-500">Invalid game ID.</div>;
   }
+  const gameId = params.gameId as string;
 
-  const gameId = Number(params.gameId);
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   //TODO: Fetchowac ruchy
 
-  // const { isPending, error, data } = useQuery({
-  //   queryKey: ["gameData", gameId],
-  //   queryFn: () =>
-  //     fetch(`http://localhost:8080/games/${gameId}`).then((res) => res.json()),
-  // });
-
-  if (!sampleGames[gameId]) {
-    return <div className="text-center text-red-500">Game not found.</div>;
-  }
-
-  const game: GameData = sampleGames[gameId] || sicilianDefenseGame;
-  console.log(gameId);
+  const { isPending, error, data } = useQuery({
+    queryKey: ["gameData", gameId],
+    queryFn: () =>
+      fetch(`http://localhost:8080/games/${gameId}`).then((res) => res.json()),
+  });
+  const game = data as GameData;
+  console.log(game);
 
   const handleMoveChange = (moveIndex: number) => {
     setCurrentMoveIndex(moveIndex);
@@ -39,14 +35,14 @@ const GamePage = () => {
     if (!game || !game.moves || game.moves.length === 0) {
       return false;
     }
-    if (!game.title || !game.description) {
+    if (!game.title) {
       return false;
     }
-    for (const move of game.moves) {
-      if (!move.fen || !move.explanation) {
-        return false;
-      }
-    }
+    // for (const move of game.moves) {
+    //   if (!move.fen || !move.explanation) {
+    //     return false;
+    //   }
+    // }
     return true;
   };
 
