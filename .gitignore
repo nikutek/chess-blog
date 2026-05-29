@@ -1,0 +1,30 @@
+# Frontend (Next.js)
+frontend/.next/
+frontend/node_modules/
+frontend/.env*.local
+
+# Backend (Spring Boot)
+backend/target/
+backend/.gradle/
+backend/build/
+backend/*.jar
+backend/*.war
+backend/.env
+
+# Environment files
+.env
+.env.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code agents (skills, not project code)
+.agents/
