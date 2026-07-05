@@ -1,0 +1,7 @@
+# Copy to application-local.properties (gitignored) and fill in real values
+# from Supabase Dashboard -> Settings -> Database -> Connection string.
+# Run locally with: mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local
+
+SPRING_DATASOURCE_URL=jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres
+SPRING_DATASOURCE_USERNAME=postgres
+SPRING_DATASOURCE_PASSWORD=<your-db-password>
