@@ -28,3 +28,6 @@ Thumbs.db
 
 # Claude Code agents (skills, not project code)
 .agents/
+
+.vercel
+.env*
