@@ -1,6 +1,13 @@
 # Copy to application-local.properties (gitignored) and fill in real values
 # from Supabase Dashboard -> Settings -> Database -> Connection string.
 # Run locally with: mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local
+#
+# Direct connection (below) works fine from most local machines, but hosting
+# platforms without full IPv6 egress (Railway included) fail with
+# "java.net.SocketException: Network is unreachable" against db.<ref>.supabase.co.
+# Railway's production env vars use the Session Pooler instead (IPv4-reachable):
+#   host: aws-1-eu-central-1.pooler.supabase.com, port 5432,
+#   user: postgres.<project-ref> (not just "postgres").
 
 SPRING_DATASOURCE_URL=jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres
 SPRING_DATASOURCE_USERNAME=postgres
