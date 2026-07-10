@@ -12,3 +12,7 @@
 SPRING_DATASOURCE_URL=jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres
 SPRING_DATASOURCE_USERNAME=postgres
 SPRING_DATASOURCE_PASSWORD=<your-db-password>
+
+# Base project URL (Settings -> API). Used to derive the JWKS endpoint the
+# backend uses to verify Supabase-issued JWTs.
+SUPABASE_URL=https://<project-ref>.supabase.co
