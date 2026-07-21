@@ -3,14 +3,17 @@ package com.chessdiary.backend;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-// Datasource autoconfiguration is excluded here because this smoke test only
-// verifies the Spring context wires up; real Postgres connectivity is
-// verified manually against Supabase (see acceptance criteria for scaffolding).
+// Runs against an in-memory H2 database (schema created from entity mappings,
+// Flyway disabled) rather than excluding datasource/JPA autoconfiguration:
+// now that repository-backed beans exist (e.g. TournamentController), the
+// context can't wire up without *some* DataSource. Real Postgres connectivity
+// and the real Flyway migration are verified manually against Supabase.
 @SpringBootTest(properties = {
-		"spring.autoconfigure.exclude="
-				+ "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,"
-				+ "org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration,"
-				+ "org.springframework.boot.jpa.autoconfigure.HibernateJpaAutoConfiguration",
+		"spring.datasource.url=jdbc:h2:mem:smoke;DB_CLOSE_DELAY=-1",
+		"spring.datasource.username=sa",
+		"spring.datasource.password=",
+		"spring.flyway.enabled=false",
+		"spring.jpa.hibernate.ddl-auto=create-drop",
 		// JwtDecoder is only resolved lazily on first use, so a placeholder is enough
 		// to satisfy property binding without hitting a real Supabase project.
 		"supabase.url=https://test.supabase.co" })
