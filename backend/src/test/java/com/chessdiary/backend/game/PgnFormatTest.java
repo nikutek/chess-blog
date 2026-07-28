@@ -34,4 +34,18 @@ class PgnFormatTest {
 	void rejectsMoveNumberWithNoMoveAfterIt() {
 		assertFalse(PgnFormat.isValid("1."));
 	}
+
+	@Test
+	void acceptsAMoveSequencePrecededByTagPairHeaders() {
+		String pgn = "[Event \"Titled Tuesday\"]\n[Site \"chess.com\"]\n[Date \"2026.08.02\"]\n\n1. e4 e5 2. Nf3 Nc6";
+
+		assertTrue(PgnFormat.isValid(pgn));
+	}
+
+	@Test
+	void rejectsTagPairHeadersWithNoMovesAfterThem() {
+		String pgn = "[Event \"Titled Tuesday\"]\n[Site \"chess.com\"]";
+
+		assertFalse(PgnFormat.isValid(pgn));
+	}
 }
