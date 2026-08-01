@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
   Table,
   TableBody,
@@ -61,7 +63,11 @@ export default async function TournamentGamesPage({
           <TableBody>
             {games.map((game) => (
               <TableRow key={game.id}>
-                <TableCell>{game.opponent}</TableCell>
+                <TableCell>
+                  <Link href={`/games/${game.id}`} className="underline">
+                    {game.opponent}
+                  </Link>
+                </TableCell>
                 <TableCell>{game.color}</TableCell>
                 <TableCell>{game.date}</TableCell>
                 <TableCell>{game.status}</TableCell>
