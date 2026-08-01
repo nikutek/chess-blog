@@ -119,6 +119,26 @@ class GameControllerTest {
 		verify(gameRepository).findByTournamentId(1L);
 	}
 
+	@Test
+	void getById_withExistingId_returnsGame() throws Exception {
+		Tournament tournament = new Tournament("City Open", "Warsaw", LocalDate.of(2026, 8, 1));
+		Game game = new Game(tournament, "1. e4 e5 2. Nf3 Nc6", Color.WHITE, "Kasparov", LocalDate.of(2026, 8, 2));
+		when(gameRepository.findById(1L)).thenReturn(Optional.of(game));
+
+		mockMvc.perform(get("/api/games/1"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.pgn").value("1. e4 e5 2. Nf3 Nc6"))
+				.andExpect(jsonPath("$.opponent").value("Kasparov"));
+	}
+
+	@Test
+	void getById_withUnknownId_returnsNotFound() throws Exception {
+		when(gameRepository.findById(99L)).thenReturn(Optional.empty());
+
+		mockMvc.perform(get("/api/games/99"))
+				.andExpect(status().isNotFound());
+	}
+
 	private static GameRequest validRequest() {
 		return new GameRequest(1L, "1. e4 e5 2. Nf3 Nc6", Color.WHITE, "Kasparov", LocalDate.of(2026, 8, 2));
 	}

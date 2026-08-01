@@ -44,6 +44,12 @@ public class GameController {
 		return gameRepository.save(game);
 	}
 
+	@GetMapping("/games/{id}")
+	public Game getById(@PathVariable Long id) {
+		return gameRepository.findById(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "game not found"));
+	}
+
 	@GetMapping("/tournaments/{tournamentId}/games")
 	public List<Game> list(@PathVariable Long tournamentId, Authentication authentication) {
 		boolean authenticated = authentication != null
