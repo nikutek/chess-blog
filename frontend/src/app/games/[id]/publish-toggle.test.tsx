@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../actions", () => ({
-  publishGame: vi.fn(),
+  publishGame: vi.fn(async () => ({ error: "Could not publish the game." })),
   unpublishGame: vi.fn(),
 }));
 
@@ -22,5 +23,16 @@ describe("PublishToggle", () => {
     render(<PublishToggle gameId={1} status="PUBLISHED" />);
 
     expect(screen.getByRole("button", { name: /unpublish/i })).toBeInTheDocument();
+  });
+
+  it("shows the error message returned by the action", async () => {
+    const user = userEvent.setup();
+    render(<PublishToggle gameId={1} status="DRAFT" />);
+
+    await user.click(screen.getByRole("button", { name: /publish/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Could not publish the game.")).toBeInTheDocument();
+    });
   });
 });

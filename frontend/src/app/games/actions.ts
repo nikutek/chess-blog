@@ -63,7 +63,15 @@ export async function createGame(
   redirect(`/tournaments/${tournamentId}/games`);
 }
 
-async function setPublicationStatus(gameId: number, action: "publish" | "unpublish") {
+async function setPublicationStatus(
+  action: "publish" | "unpublish",
+  formData: FormData,
+): Promise<GameState> {
+  const gameId = formData.get("gameId");
+  if (typeof gameId !== "string" || !gameId) {
+    return { error: `Could not ${action} the game.` };
+  }
+
   const accessToken = await getAccessToken();
   if (!accessToken) {
     redirect("/login");
@@ -75,16 +83,22 @@ async function setPublicationStatus(gameId: number, action: "publish" | "unpubli
   });
 
   if (!response.ok) {
-    throw new Error(`Could not ${action} the game.`);
+    return { error: `Could not ${action} the game.` };
   }
 
   revalidatePath(`/games/${gameId}`);
 }
 
-export async function publishGame(gameId: number) {
-  await setPublicationStatus(gameId, "publish");
+export async function publishGame(
+  _prevState: GameState,
+  formData: FormData,
+): Promise<GameState> {
+  return setPublicationStatus("publish", formData);
 }
 
-export async function unpublishGame(gameId: number) {
-  await setPublicationStatus(gameId, "unpublish");
+export async function unpublishGame(
+  _prevState: GameState,
+  formData: FormData,
+): Promise<GameState> {
+  return setPublicationStatus("unpublish", formData);
 }
