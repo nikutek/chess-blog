@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getAccessToken } from "@/lib/supabase/server";
@@ -60,4 +61,30 @@ export async function createGame(
   }
 
   redirect(`/tournaments/${tournamentId}/games`);
+}
+
+async function setPublicationStatus(gameId: number, action: "publish" | "unpublish") {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    redirect("/login");
+  }
+
+  const response = await fetch(`${process.env.API_URL}/api/games/${gameId}/${action}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Could not ${action} the game.`);
+  }
+
+  revalidatePath(`/games/${gameId}`);
+}
+
+export async function publishGame(gameId: number) {
+  await setPublicationStatus(gameId, "publish");
+}
+
+export async function unpublishGame(gameId: number) {
+  await setPublicationStatus(gameId, "unpublish");
 }
