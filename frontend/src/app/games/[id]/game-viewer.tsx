@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Chessboard } from "react-chessboard";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 export function GameViewer({ pgn }: { pgn: string }) {
-  const moves = parsePgn(pgn);
+  const moves = useMemo(() => parsePgn(pgn), [pgn]);
   const [moveIndex, setMoveIndex] = useState(-1);
 
   const position = moveIndex === -1 ? START_FEN : moves[moveIndex].fen;
@@ -58,6 +58,12 @@ export function GameViewer({ pgn }: { pgn: string }) {
               tabIndex={0}
               aria-current={index === moveIndex}
               onClick={() => setMoveIndex(index)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setMoveIndex(index);
+                }
+              }}
               className={cn(
                 "cursor-pointer rounded px-2 py-1 hover:bg-accent",
                 index === moveIndex && "bg-accent font-semibold",

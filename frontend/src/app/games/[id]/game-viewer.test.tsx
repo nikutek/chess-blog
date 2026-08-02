@@ -85,4 +85,17 @@ describe("GameViewer", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Nf3")).toHaveAttribute("aria-current", "true");
   });
+
+  it("jumps to a move when it is activated with the keyboard", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<GameViewer pgn="1. e4 e5 2. Nf3 Nc6" />);
+
+    screen.getByText("Nf3").focus();
+    await user.keyboard("{Enter}");
+
+    expect(
+      container.querySelector("#game-viewer-piece-wN-f3"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Nf3")).toHaveAttribute("aria-current", "true");
+  });
 });
