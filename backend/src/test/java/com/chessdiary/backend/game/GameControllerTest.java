@@ -120,9 +120,10 @@ class GameControllerTest {
 	}
 
 	@Test
-	void getById_withExistingId_returnsGame() throws Exception {
+	void getById_publishedGame_withoutAuthentication_returnsGame() throws Exception {
 		Tournament tournament = new Tournament("City Open", "Warsaw", LocalDate.of(2026, 8, 1));
 		Game game = new Game(tournament, "1. e4 e5 2. Nf3 Nc6", Color.WHITE, "Kasparov", LocalDate.of(2026, 8, 2));
+		game.publish();
 		when(gameRepository.findById(1L)).thenReturn(Optional.of(game));
 
 		mockMvc.perform(get("/api/games/1"))
@@ -132,11 +133,66 @@ class GameControllerTest {
 	}
 
 	@Test
+	void getById_draftGame_withoutAuthentication_returnsNotFound() throws Exception {
+		Tournament tournament = new Tournament("City Open", "Warsaw", LocalDate.of(2026, 8, 1));
+		Game game = new Game(tournament, "1. e4 e5 2. Nf3 Nc6", Color.WHITE, "Kasparov", LocalDate.of(2026, 8, 2));
+		when(gameRepository.findById(1L)).thenReturn(Optional.of(game));
+
+		mockMvc.perform(get("/api/games/1"))
+				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void getById_draftGame_withAuthentication_returnsGame() throws Exception {
+		Tournament tournament = new Tournament("City Open", "Warsaw", LocalDate.of(2026, 8, 1));
+		Game game = new Game(tournament, "1. e4 e5 2. Nf3 Nc6", Color.WHITE, "Kasparov", LocalDate.of(2026, 8, 2));
+		when(gameRepository.findById(1L)).thenReturn(Optional.of(game));
+
+		mockMvc.perform(get("/api/games/1")
+						.header("Authorization", "Bearer " + TestJwtDecoderConfig.validToken()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("DRAFT"));
+	}
+
+	@Test
 	void getById_withUnknownId_returnsNotFound() throws Exception {
 		when(gameRepository.findById(99L)).thenReturn(Optional.empty());
 
 		mockMvc.perform(get("/api/games/99"))
 				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void publish_withoutAuthorizationHeader_returnsUnauthorized() throws Exception {
+		mockMvc.perform(post("/api/games/1/publish"))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void publish_withValidToken_changesStatusToPublished() throws Exception {
+		Tournament tournament = new Tournament("City Open", "Warsaw", LocalDate.of(2026, 8, 1));
+		Game game = new Game(tournament, "1. e4 e5 2. Nf3 Nc6", Color.WHITE, "Kasparov", LocalDate.of(2026, 8, 2));
+		when(gameRepository.findById(1L)).thenReturn(Optional.of(game));
+		when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		mockMvc.perform(post("/api/games/1/publish")
+						.header("Authorization", "Bearer " + TestJwtDecoderConfig.validToken()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("PUBLISHED"));
+	}
+
+	@Test
+	void unpublish_withValidToken_changesStatusToDraft() throws Exception {
+		Tournament tournament = new Tournament("City Open", "Warsaw", LocalDate.of(2026, 8, 1));
+		Game game = new Game(tournament, "1. e4 e5 2. Nf3 Nc6", Color.WHITE, "Kasparov", LocalDate.of(2026, 8, 2));
+		game.publish();
+		when(gameRepository.findById(1L)).thenReturn(Optional.of(game));
+		when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		mockMvc.perform(post("/api/games/1/unpublish")
+						.header("Authorization", "Bearer " + TestJwtDecoderConfig.validToken()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("DRAFT"));
 	}
 
 	private static GameRequest validRequest() {

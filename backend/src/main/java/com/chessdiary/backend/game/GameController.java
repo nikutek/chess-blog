@@ -45,19 +45,44 @@ public class GameController {
 	}
 
 	@GetMapping("/games/{id}")
-	public Game getById(@PathVariable Long id) {
-		return gameRepository.findById(id)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "game not found"));
+	public Game getById(@PathVariable Long id, Authentication authentication) {
+		Game game = findGameOrThrow(id);
+		if (game.getStatus() != Status.PUBLISHED && !isAuthenticated(authentication)) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "game not found");
+		}
+		return game;
+	}
+
+	@PostMapping("/games/{id}/publish")
+	public Game publish(@PathVariable Long id) {
+		Game game = findGameOrThrow(id);
+		game.publish();
+		return gameRepository.save(game);
+	}
+
+	@PostMapping("/games/{id}/unpublish")
+	public Game unpublish(@PathVariable Long id) {
+		Game game = findGameOrThrow(id);
+		game.unpublish();
+		return gameRepository.save(game);
 	}
 
 	@GetMapping("/tournaments/{tournamentId}/games")
 	public List<Game> list(@PathVariable Long tournamentId, Authentication authentication) {
-		boolean authenticated = authentication != null
-				&& authentication.isAuthenticated()
-				&& !(authentication instanceof AnonymousAuthenticationToken);
-		if (authenticated) {
+		if (isAuthenticated(authentication)) {
 			return gameRepository.findByTournamentId(tournamentId);
 		}
 		return gameRepository.findByTournamentIdAndStatus(tournamentId, Status.PUBLISHED);
+	}
+
+	private Game findGameOrThrow(Long id) {
+		return gameRepository.findById(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "game not found"));
+	}
+
+	private static boolean isAuthenticated(Authentication authentication) {
+		return authentication != null
+				&& authentication.isAuthenticated()
+				&& !(authentication instanceof AnonymousAuthenticationToken);
 	}
 }
