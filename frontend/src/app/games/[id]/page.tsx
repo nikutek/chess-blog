@@ -11,6 +11,7 @@ type Game = {
 };
 
 type Annotation = { id: number; fen: string; text: string };
+type Sideline = { id: number; branchFen: string; pgn: string; description: string | null };
 
 async function getGame(id: string, accessToken: string | undefined): Promise<Game> {
   const response = await fetch(`${process.env.API_URL}/api/games/${id}`, {
@@ -37,6 +38,18 @@ async function getAnnotations(id: string): Promise<Annotation[]> {
   return response.json();
 }
 
+async function getSidelines(id: string): Promise<Sideline[]> {
+  const response = await fetch(`${process.env.API_URL}/api/games/${id}/sidelines`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not load the sidelines.");
+  }
+
+  return response.json();
+}
+
 export default async function GamePage({
   params,
 }: {
@@ -44,7 +57,11 @@ export default async function GamePage({
 }) {
   const { id } = await params;
   const accessToken = await getAccessToken();
-  const [game, annotations] = await Promise.all([getGame(id, accessToken), getAnnotations(id)]);
+  const [game, annotations, sidelines] = await Promise.all([
+    getGame(id, accessToken),
+    getAnnotations(id),
+    getSidelines(id),
+  ]);
 
   return (
     <div className="flex min-h-screen flex-col items-center gap-6 p-4 pt-16">
@@ -52,7 +69,13 @@ export default async function GamePage({
         vs {game.opponent}
       </h1>
       {accessToken && <PublishToggle gameId={game.id} status={game.status} />}
-      <GameViewer pgn={game.pgn} gameId={game.id} isAuthor={!!accessToken} annotations={annotations} />
+      <GameViewer
+        pgn={game.pgn}
+        gameId={game.id}
+        isAuthor={!!accessToken}
+        annotations={annotations}
+        sidelines={sidelines}
+      />
     </div>
   );
 }

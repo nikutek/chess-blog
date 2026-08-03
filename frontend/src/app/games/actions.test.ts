@@ -12,7 +12,7 @@ const revalidatePath = vi.fn();
 
 vi.mock("next/cache", () => ({ revalidatePath }));
 
-const { createGame, saveAnnotation, deleteAnnotation } = await import("./actions");
+const { createGame, saveAnnotation, deleteAnnotation, saveSideline, deleteSideline } = await import("./actions");
 
 function formData(fields: Record<string, string>) {
   const fd = new FormData();
@@ -162,6 +162,122 @@ describe("saveAnnotation", () => {
       undefined,
       formData({ gameId: "1", fen: "startpos", annotationId: "", text: "text" }),
     );
+
+    expect(result?.error).toBeTruthy();
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("saveSideline", () => {
+  it("posts a new sideline when no sidelineId is given", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    fetchMock.mockResolvedValue(new Response(null, { status: 201 }));
+
+    const result = await saveSideline(
+      undefined,
+      formData({
+        gameId: "1",
+        sidelineId: "",
+        branchFen: "startpos",
+        pgn: "2. Nc3 Nf6",
+        description: "A quieter alternative to Nf3.",
+      }),
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/games/1/sidelines"),
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ Authorization: "Bearer test-access-token" }),
+        body: JSON.stringify({
+          branchFen: "startpos",
+          pgn: "2. Nc3 Nf6",
+          description: "A quieter alternative to Nf3.",
+        }),
+      }),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/games/1");
+    expect(result).toBeUndefined();
+  });
+
+  it("puts to the sideline's own url when a sidelineId is given", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+
+    await saveSideline(
+      undefined,
+      formData({ gameId: "1", sidelineId: "7", branchFen: "startpos", pgn: "2. Nc3 Nf6", description: "" }),
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/games/1/sidelines/7"),
+      expect.objectContaining({
+        method: "PUT",
+        headers: expect.objectContaining({ Authorization: "Bearer test-access-token" }),
+        body: JSON.stringify({ pgn: "2. Nc3 Nf6", description: "" }),
+      }),
+    );
+  });
+
+  it("rejects a blank pgn without calling the backend", async () => {
+    const result = await saveSideline(
+      undefined,
+      formData({ gameId: "1", sidelineId: "", branchFen: "startpos", pgn: "", description: "" }),
+    );
+
+    expect(result?.error).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("redirects to /login when there is no access token", async () => {
+    getAccessToken.mockResolvedValue(undefined);
+
+    await saveSideline(
+      undefined,
+      formData({ gameId: "1", sidelineId: "", branchFen: "startpos", pgn: "2. Nc3 Nf6", description: "" }),
+    );
+
+    expect(redirect).toHaveBeenCalledWith("/login");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns an error message when the backend rejects the request", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    fetchMock.mockResolvedValue(new Response(null, { status: 400 }));
+
+    const result = await saveSideline(
+      undefined,
+      formData({ gameId: "1", sidelineId: "", branchFen: "startpos", pgn: "2. Nc3 Nf6", description: "" }),
+    );
+
+    expect(result?.error).toBeTruthy();
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("deleteSideline", () => {
+  it("deletes the sideline and revalidates the game page", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    const result = await deleteSideline(undefined, formData({ gameId: "1", sidelineId: "7" }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/games/1/sidelines/7"),
+      expect.objectContaining({
+        method: "DELETE",
+        headers: expect.objectContaining({ Authorization: "Bearer test-access-token" }),
+      }),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/games/1");
+    expect(result).toBeUndefined();
+  });
+
+  it("returns an error message when the backend rejects the request", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    fetchMock.mockResolvedValue(new Response(null, { status: 400 }));
+
+    const result = await deleteSideline(undefined, formData({ gameId: "1", sidelineId: "7" }));
 
     expect(result?.error).toBeTruthy();
     expect(revalidatePath).not.toHaveBeenCalled();

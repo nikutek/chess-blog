@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parsePgn } from "./parse-pgn";
+import { parsePgn, parseSideline } from "./parse-pgn";
 
 describe("parsePgn", () => {
   it("returns one entry per move with its SAN and resulting FEN", () => {
@@ -20,5 +20,18 @@ describe("parsePgn", () => {
     const moves = parsePgn(pgn);
 
     expect(moves.map((move) => move.san)).toEqual(["e4", "e5", "Nf3", "Nc6"]);
+  });
+});
+
+describe("parseSideline", () => {
+  it("plays the snippet out from the given branch position", () => {
+    const branchFen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2";
+
+    const moves = parseSideline(branchFen, "2. Nc3 Nf6");
+
+    expect(moves.map((move) => move.san)).toEqual(["Nc3", "Nf6"]);
+    expect(moves[0].fen).toBe(
+      "rnbqkbnr/pppp1ppp/8/4p3/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 1 2",
+    );
   });
 });

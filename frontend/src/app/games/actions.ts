@@ -150,6 +150,84 @@ export async function saveAnnotation(
   revalidatePath(`/games/${gameId}`);
 }
 
+export async function saveSideline(
+  _prevState: GameState,
+  formData: FormData,
+): Promise<GameState> {
+  const gameId = formData.get("gameId");
+  const branchFen = formData.get("branchFen");
+  const sidelineId = formData.get("sidelineId");
+  const pgn = formData.get("pgn");
+  const description = formData.get("description");
+
+  if (
+    typeof gameId !== "string" ||
+    typeof branchFen !== "string" ||
+    typeof pgn !== "string" ||
+    typeof description !== "string" ||
+    !gameId ||
+    !branchFen ||
+    !pgn
+  ) {
+    return { error: "Sideline PGN is required." };
+  }
+
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    redirect("/login");
+    return;
+  }
+
+  const isUpdate = typeof sidelineId === "string" && sidelineId !== "";
+  const url = isUpdate
+    ? `${process.env.API_URL}/api/games/${gameId}/sidelines/${sidelineId}`
+    : `${process.env.API_URL}/api/games/${gameId}/sidelines`;
+
+  const response = await fetch(url, {
+    method: isUpdate ? "PUT" : "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(isUpdate ? { pgn, description } : { branchFen, pgn, description }),
+  });
+
+  if (!response.ok) {
+    return { error: "Could not save the sideline." };
+  }
+
+  revalidatePath(`/games/${gameId}`);
+}
+
+export async function deleteSideline(
+  _prevState: GameState,
+  formData: FormData,
+): Promise<GameState> {
+  const gameId = formData.get("gameId");
+  const sidelineId = formData.get("sidelineId");
+
+  if (typeof gameId !== "string" || typeof sidelineId !== "string" || !gameId || !sidelineId) {
+    return { error: "Could not delete the sideline." };
+  }
+
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    redirect("/login");
+    return;
+  }
+
+  const response = await fetch(`${process.env.API_URL}/api/games/${gameId}/sidelines/${sidelineId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    return { error: "Could not delete the sideline." };
+  }
+
+  revalidatePath(`/games/${gameId}`);
+}
+
 export async function deleteAnnotation(
   _prevState: GameState,
   formData: FormData,

@@ -8,24 +8,30 @@ import { parsePgn } from "@/lib/chess/parse-pgn";
 import { cn } from "@/lib/utils";
 
 import { AnnotationEditor } from "./annotation-editor";
+import { SidelineEditor } from "./sideline-editor";
+import { SidelineViewer } from "./sideline-viewer";
 
 const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 type Annotation = { id: number; fen: string; text: string };
+type Sideline = { id: number; branchFen: string; pgn: string; description: string | null };
 
 export function GameViewer({
   pgn,
   gameId,
   isAuthor,
   annotations,
+  sidelines = [],
 }: {
   pgn: string;
   gameId: number;
   isAuthor: boolean;
   annotations: Annotation[];
+  sidelines?: Sideline[];
 }) {
   const moves = useMemo(() => parsePgn(pgn), [pgn]);
   const [moveIndex, setMoveIndex] = useState(-1);
+  const [activeSidelineId, setActiveSidelineId] = useState<number | null>(null);
 
   const position = moveIndex === -1 ? START_FEN : moves[moveIndex].fen;
   const annotationByFen = useMemo(
@@ -33,6 +39,24 @@ export function GameViewer({
     [annotations],
   );
   const currentAnnotation = annotationByFen.get(position);
+
+  const sidelinesByFen = useMemo(() => {
+    const map = new Map<string, Sideline[]>();
+    for (const sideline of sidelines) {
+      map.set(sideline.branchFen, [...(map.get(sideline.branchFen) ?? []), sideline]);
+    }
+    return map;
+  }, [sidelines]);
+  const currentSidelines = sidelinesByFen.get(position) ?? [];
+  const activeSideline = sidelines.find((sideline) => sideline.id === activeSidelineId);
+
+  if (activeSideline) {
+    return (
+      <div className="w-full max-w-2xl">
+        <SidelineViewer sideline={activeSideline} onBack={() => setActiveSidelineId(null)} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full max-w-2xl flex-col gap-4">
@@ -91,6 +115,17 @@ export function GameViewer({
               >
                 {move.san}
               </span>
+              {(sidelinesByFen.get(move.fen) ?? []).map((sideline, sidelineIndex) => (
+                <button
+                  key={sideline.id}
+                  type="button"
+                  aria-label={`View sideline ${sidelineIndex + 1}`}
+                  onClick={() => setActiveSidelineId(sideline.id)}
+                  className="ml-1 rounded px-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  ⑂
+                </button>
+              ))}
             </li>
           ))}
         </ol>
@@ -99,6 +134,14 @@ export function GameViewer({
         <AnnotationEditor key={position} gameId={gameId} fen={position} annotation={currentAnnotation} />
       ) : (
         currentAnnotation && <p>{currentAnnotation.text}</p>
+      )}
+      {isAuthor && moveIndex !== -1 && (
+        <div className="flex flex-col gap-2">
+          {currentSidelines.map((sideline) => (
+            <SidelineEditor key={sideline.id} gameId={gameId} branchFen={position} sideline={sideline} />
+          ))}
+          <SidelineEditor key={`new-${position}`} gameId={gameId} branchFen={position} sideline={undefined} />
+        </div>
       )}
     </div>
   );

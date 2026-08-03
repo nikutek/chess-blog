@@ -4,7 +4,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import { parsePgn } from "@/lib/chess/parse-pgn";
 
-vi.mock("../actions", () => ({ saveAnnotation: vi.fn(), deleteAnnotation: vi.fn() }));
+vi.mock("../actions", () => ({
+  saveAnnotation: vi.fn(),
+  deleteAnnotation: vi.fn(),
+  saveSideline: vi.fn(),
+  deleteSideline: vi.fn(),
+}));
 
 const { GameViewer } = await import("./game-viewer");
 
@@ -130,5 +135,72 @@ describe("GameViewer", () => {
     render(<GameViewer pgn="1. e4 e5 2. Nf3 Nc6" gameId={1} isAuthor={true} annotations={[]} />);
 
     expect(screen.getByRole("textbox")).toBeInTheDocument();
+  });
+
+  it("shows a sideline indicator at the branch point move", async () => {
+    const user = userEvent.setup();
+    const fenAfterE4 = parsePgn("1. e4 e5 2. Nf3 Nc6")[0].fen;
+    render(
+      <GameViewer
+        pgn="1. e4 e5 2. Nf3 Nc6"
+        gameId={1}
+        isAuthor={false}
+        annotations={[]}
+        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead." }]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+
+    expect(screen.getByRole("button", { name: /sideline/i })).toBeInTheDocument();
+  });
+
+  it("enters the sideline view and shows its description when the indicator is clicked", async () => {
+    const user = userEvent.setup();
+    const fenAfterE4 = parsePgn("1. e4 e5 2. Nf3 Nc6")[0].fen;
+    render(
+      <GameViewer
+        pgn="1. e4 e5 2. Nf3 Nc6"
+        gameId={1}
+        isAuthor={false}
+        annotations={[]}
+        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead." }]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await user.click(screen.getByRole("button", { name: /sideline/i }));
+
+    expect(screen.getByText("Sicilian instead.")).toBeInTheDocument();
+  });
+
+  it("returns to the main game from a sideline", async () => {
+    const user = userEvent.setup();
+    const fenAfterE4 = parsePgn("1. e4 e5 2. Nf3 Nc6")[0].fen;
+    render(
+      <GameViewer
+        pgn="1. e4 e5 2. Nf3 Nc6"
+        gameId={1}
+        isAuthor={false}
+        annotations={[]}
+        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead." }]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await user.click(screen.getByRole("button", { name: /sideline/i }));
+    await user.click(screen.getByRole("button", { name: /back to main game/i }));
+
+    expect(screen.getByText("Nf3")).toBeInTheDocument();
+    expect(screen.queryByText("Sicilian instead.")).not.toBeInTheDocument();
+  });
+
+  it("shows a sideline creation form to the author for the selected move", async () => {
+    const user = userEvent.setup();
+    render(<GameViewer pgn="1. e4 e5 2. Nf3 Nc6" gameId={1} isAuthor={true} annotations={[]} sidelines={[]} />);
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+
+    expect(screen.getByLabelText(/sideline pgn/i)).toBeInTheDocument();
   });
 });

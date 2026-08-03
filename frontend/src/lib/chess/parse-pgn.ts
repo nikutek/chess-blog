@@ -14,3 +14,13 @@ export function parsePgn(pgn: string): ParsedMove[] {
     fen: move.after,
   }));
 }
+
+export function parseSideline(branchFen: string, pgn: string): ParsedMove[] {
+  const chess = new Chess();
+  chess.loadPgn(`[SetUp "1"]\n[FEN "${branchFen}"]\n\n${pgn}`);
+
+  return chess.history({ verbose: true }).map((move) => ({
+    san: move.san,
+    fen: move.after,
+  }));
+}
