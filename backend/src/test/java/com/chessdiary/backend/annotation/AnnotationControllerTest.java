@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -70,24 +71,26 @@ class AnnotationControllerTest {
 	}
 
 	@Test
-	void getByFen_whenAnnotationExists_returnsIt() throws Exception {
+	void list_returnsAllAnnotationsForTheGame() throws Exception {
 		Game game = aGame();
 		Annotation annotation = new Annotation(game, ContextType.MAIN_LINE, null, "startpos", "Solid opening choice.");
-		when(annotationRepository.findByGameIdAndContextTypeAndSidelineIdAndFen(1L, ContextType.MAIN_LINE, null, "startpos"))
-				.thenReturn(Optional.of(annotation));
+		when(annotationRepository.findByGameIdAndContextType(1L, ContextType.MAIN_LINE))
+				.thenReturn(List.of(annotation));
 
-		mockMvc.perform(get("/api/games/1/annotations").param("fen", "startpos"))
+		mockMvc.perform(get("/api/games/1/annotations"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.text").value("Solid opening choice."));
+				.andExpect(jsonPath("$[0].fen").value("startpos"))
+				.andExpect(jsonPath("$[0].text").value("Solid opening choice."));
 	}
 
 	@Test
-	void getByFen_whenNoAnnotationExists_returnsNotFound() throws Exception {
-		when(annotationRepository.findByGameIdAndContextTypeAndSidelineIdAndFen(1L, ContextType.MAIN_LINE, null, "startpos"))
-				.thenReturn(Optional.empty());
+	void list_whenNoAnnotationsExist_returnsEmptyList() throws Exception {
+		when(annotationRepository.findByGameIdAndContextType(1L, ContextType.MAIN_LINE)).thenReturn(List.of());
 
-		mockMvc.perform(get("/api/games/1/annotations").param("fen", "startpos"))
-				.andExpect(status().isNotFound());
+		mockMvc.perform(get("/api/games/1/annotations"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$").isArray())
+				.andExpect(jsonPath("$").isEmpty());
 	}
 
 	@Test
