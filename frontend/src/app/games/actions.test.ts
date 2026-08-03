@@ -8,7 +8,11 @@ vi.mock("@/lib/supabase/server", () => ({ getAccessToken }));
 vi.mock("next/navigation", () => ({ redirect }));
 vi.stubGlobal("fetch", fetchMock);
 
-const { createGame } = await import("./actions");
+const revalidatePath = vi.fn();
+
+vi.mock("next/cache", () => ({ revalidatePath }));
+
+const { createGame, saveAnnotation, deleteAnnotation } = await import("./actions");
 
 function formData(fields: Record<string, string>) {
   const fd = new FormData();
@@ -30,6 +34,7 @@ beforeEach(() => {
   getAccessToken.mockReset();
   redirect.mockReset();
   fetchMock.mockReset();
+  revalidatePath.mockReset();
 });
 
 describe("createGame", () => {
@@ -83,5 +88,111 @@ describe("createGame", () => {
 
     expect(result?.error).toBeTruthy();
     expect(redirect).not.toHaveBeenCalled();
+  });
+});
+
+describe("saveAnnotation", () => {
+  it("posts a new annotation when no annotationId is given", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    fetchMock.mockResolvedValue(new Response(null, { status: 201 }));
+
+    const result = await saveAnnotation(
+      undefined,
+      formData({ gameId: "1", fen: "startpos", annotationId: "", text: "Solid opening choice." }),
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/games/1/annotations"),
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ Authorization: "Bearer test-access-token" }),
+        body: JSON.stringify({ fen: "startpos", text: "Solid opening choice." }),
+      }),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/games/1");
+    expect(result).toBeUndefined();
+  });
+
+  it("puts to the annotation's own url when an annotationId is given", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+
+    await saveAnnotation(
+      undefined,
+      formData({ gameId: "1", fen: "startpos", annotationId: "5", text: "updated" }),
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/games/1/annotations/5"),
+      expect.objectContaining({
+        method: "PUT",
+        headers: expect.objectContaining({ Authorization: "Bearer test-access-token" }),
+        body: JSON.stringify({ text: "updated" }),
+      }),
+    );
+  });
+
+  it("rejects blank text without calling the backend", async () => {
+    const result = await saveAnnotation(
+      undefined,
+      formData({ gameId: "1", fen: "startpos", annotationId: "", text: "" }),
+    );
+
+    expect(result?.error).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("redirects to /login when there is no access token", async () => {
+    getAccessToken.mockResolvedValue(undefined);
+
+    await saveAnnotation(
+      undefined,
+      formData({ gameId: "1", fen: "startpos", annotationId: "", text: "text" }),
+    );
+
+    expect(redirect).toHaveBeenCalledWith("/login");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns an error message when the backend rejects the request", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    fetchMock.mockResolvedValue(new Response(null, { status: 400 }));
+
+    const result = await saveAnnotation(
+      undefined,
+      formData({ gameId: "1", fen: "startpos", annotationId: "", text: "text" }),
+    );
+
+    expect(result?.error).toBeTruthy();
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("deleteAnnotation", () => {
+  it("deletes the annotation and revalidates the game page", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    const result = await deleteAnnotation(undefined, formData({ gameId: "1", annotationId: "5" }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/games/1/annotations/5"),
+      expect.objectContaining({
+        method: "DELETE",
+        headers: expect.objectContaining({ Authorization: "Bearer test-access-token" }),
+      }),
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/games/1");
+    expect(result).toBeUndefined();
+  });
+
+  it("returns an error message when the backend rejects the request", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    fetchMock.mockResolvedValue(new Response(null, { status: 400 }));
+
+    const result = await deleteAnnotation(undefined, formData({ gameId: "1", annotationId: "5" }));
+
+    expect(result?.error).toBeTruthy();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

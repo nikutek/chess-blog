@@ -102,3 +102,79 @@ export async function unpublishGame(
 ): Promise<GameState> {
   return setPublicationStatus("unpublish", formData);
 }
+
+export async function saveAnnotation(
+  _prevState: GameState,
+  formData: FormData,
+): Promise<GameState> {
+  const gameId = formData.get("gameId");
+  const fen = formData.get("fen");
+  const annotationId = formData.get("annotationId");
+  const text = formData.get("text");
+
+  if (
+    typeof gameId !== "string" ||
+    typeof fen !== "string" ||
+    typeof text !== "string" ||
+    !gameId ||
+    !fen ||
+    !text
+  ) {
+    return { error: "Annotation text is required." };
+  }
+
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    redirect("/login");
+    return;
+  }
+
+  const isUpdate = typeof annotationId === "string" && annotationId !== "";
+  const url = isUpdate
+    ? `${process.env.API_URL}/api/games/${gameId}/annotations/${annotationId}`
+    : `${process.env.API_URL}/api/games/${gameId}/annotations`;
+
+  const response = await fetch(url, {
+    method: isUpdate ? "PUT" : "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(isUpdate ? { text } : { fen, text }),
+  });
+
+  if (!response.ok) {
+    return { error: "Could not save the annotation." };
+  }
+
+  revalidatePath(`/games/${gameId}`);
+}
+
+export async function deleteAnnotation(
+  _prevState: GameState,
+  formData: FormData,
+): Promise<GameState> {
+  const gameId = formData.get("gameId");
+  const annotationId = formData.get("annotationId");
+
+  if (typeof gameId !== "string" || typeof annotationId !== "string" || !gameId || !annotationId) {
+    return { error: "Could not delete the annotation." };
+  }
+
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    redirect("/login");
+    return;
+  }
+
+  const response = await fetch(`${process.env.API_URL}/api/games/${gameId}/annotations/${annotationId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    return { error: "Could not delete the annotation." };
+  }
+
+  revalidatePath(`/games/${gameId}`);
+}

@@ -10,6 +10,8 @@ type Game = {
   status: "DRAFT" | "PUBLISHED";
 };
 
+type Annotation = { id: number; fen: string; text: string };
+
 async function getGame(id: string, accessToken: string | undefined): Promise<Game> {
   const response = await fetch(`${process.env.API_URL}/api/games/${id}`, {
     cache: "no-store",
@@ -23,6 +25,18 @@ async function getGame(id: string, accessToken: string | undefined): Promise<Gam
   return response.json();
 }
 
+async function getAnnotations(id: string): Promise<Annotation[]> {
+  const response = await fetch(`${process.env.API_URL}/api/games/${id}/annotations`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not load the annotations.");
+  }
+
+  return response.json();
+}
+
 export default async function GamePage({
   params,
 }: {
@@ -30,7 +44,7 @@ export default async function GamePage({
 }) {
   const { id } = await params;
   const accessToken = await getAccessToken();
-  const game = await getGame(id, accessToken);
+  const [game, annotations] = await Promise.all([getGame(id, accessToken), getAnnotations(id)]);
 
   return (
     <div className="flex min-h-screen flex-col items-center gap-6 p-4 pt-16">
@@ -38,7 +52,7 @@ export default async function GamePage({
         vs {game.opponent}
       </h1>
       {accessToken && <PublishToggle gameId={game.id} status={game.status} />}
-      <GameViewer pgn={game.pgn} />
+      <GameViewer pgn={game.pgn} gameId={game.id} isAuthor={!!accessToken} annotations={annotations} />
     </div>
   );
 }
