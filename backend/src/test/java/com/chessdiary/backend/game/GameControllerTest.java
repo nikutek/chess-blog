@@ -182,6 +182,12 @@ class GameControllerTest {
 	}
 
 	@Test
+	void unpublish_withoutAuthorizationHeader_returnsUnauthorized() throws Exception {
+		mockMvc.perform(post("/api/games/1/unpublish"))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
 	void unpublish_withValidToken_changesStatusToDraft() throws Exception {
 		Tournament tournament = new Tournament("City Open", "Warsaw", LocalDate.of(2026, 8, 1));
 		Game game = new Game(tournament, "1. e4 e5 2. Nf3 Nc6", Color.WHITE, "Kasparov", LocalDate.of(2026, 8, 2));
