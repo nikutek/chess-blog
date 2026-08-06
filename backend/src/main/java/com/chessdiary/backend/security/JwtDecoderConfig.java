@@ -3,6 +3,7 @@ package com.chessdiary.backend.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
@@ -16,9 +17,11 @@ public class JwtDecoderConfig {
 	JwtDecoder jwtDecoder(@Value("${supabase.url}") String supabaseUrl) {
 		String jwksUri = supabaseUrl + "/auth/v1/.well-known/jwks.json";
 		// Supabase signs with ES256 (asymmetric JWT signing keys), not the RS256
-		// NimbusJwtDecoder assumes by default when given a bare JWKS URI.
-		// discoverJwsAlgorithms() reads the algorithm from each JWK's "alg" field
-		// instead of hardcoding one, so this keeps working if Supabase rotates it.
-		return NimbusJwtDecoder.withJwkSetUri(jwksUri).discoverJwsAlgorithms().build();
+		// NimbusJwtDecoder assumes by default when given a bare JWKS URI. Declaring
+		// it explicitly (rather than discoverJwsAlgorithms(), which fetches the JWKS
+		// eagerly at bean creation) keeps JWKS resolution lazy on first decode -
+		// see ChessDiaryBackendApplicationTests, which relies on that laziness to
+		// boot with a placeholder supabase.url that has no real JWKS endpoint.
+		return NimbusJwtDecoder.withJwkSetUri(jwksUri).jwsAlgorithm(SignatureAlgorithm.ES256).build();
 	}
 }
