@@ -11,4 +11,6 @@ public interface AnnotationRepository extends JpaRepository<Annotation, Long> {
 			Long gameId, ContextType contextType, Long sidelineId, String fen);
 
 	List<Annotation> findByGameId(Long gameId);
+
+	void deleteBySidelineId(Long sidelineId);
 }

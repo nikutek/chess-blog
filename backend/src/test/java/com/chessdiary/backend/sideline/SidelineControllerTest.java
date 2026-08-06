@@ -1,6 +1,7 @@
 package com.chessdiary.backend.sideline;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -22,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.chessdiary.backend.annotation.AnnotationRepository;
 import com.chessdiary.backend.game.Color;
 import com.chessdiary.backend.game.Game;
 import com.chessdiary.backend.game.GameRepository;
@@ -47,6 +49,9 @@ class SidelineControllerTest {
 	@MockitoBean
 	private GameRepository gameRepository;
 
+	@MockitoBean
+	private AnnotationRepository annotationRepository;
+
 	@Test
 	void create_withoutAuthorizationHeader_returnsUnauthorized() throws Exception {
 		mockMvc.perform(post("/api/games/1/sidelines")
@@ -69,6 +74,21 @@ class SidelineControllerTest {
 				.andExpect(jsonPath("$.branchFen").value("startpos"))
 				.andExpect(jsonPath("$.pgn").value("1. Nc3 Nf6"))
 				.andExpect(jsonPath("$.description").value("A quieter alternative to Nf3."));
+	}
+
+	@Test
+	void create_withParentSidelineId_isCreatedAsNestedSideline() throws Exception {
+		Game game = aGame();
+		when(gameRepository.findById(1L)).thenReturn(Optional.of(game));
+		when(sidelineRepository.save(any(Sideline.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		mockMvc.perform(post("/api/games/1/sidelines")
+						.header("Authorization", "Bearer " + TestJwtDecoderConfig.validToken())
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(
+								new SidelineRequest("startpos", "1... Nf6", "Nested reply.", 3L))))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.parentSidelineId").value(3));
 	}
 
 	@Test
@@ -113,20 +133,39 @@ class SidelineControllerTest {
 	}
 
 	@Test
-	void delete_withValidToken_removesSideline() throws Exception {
+	void delete_withValidToken_removesSidelineAndItsAnnotations() throws Exception {
 		Game game = aGame();
 		Sideline sideline = new Sideline(game, null, "startpos", "1. Nc3", "desc");
 		when(sidelineRepository.findById(5L)).thenReturn(Optional.of(sideline));
+		when(sidelineRepository.findByParentSidelineId(null)).thenReturn(List.of());
 
 		mockMvc.perform(delete("/api/games/1/sidelines/5")
 						.header("Authorization", "Bearer " + TestJwtDecoderConfig.validToken()))
 				.andExpect(status().isNoContent());
 
+		verify(annotationRepository).deleteBySidelineId(null);
 		verify(sidelineRepository).delete(sideline);
 	}
 
+	@Test
+	void delete_cascadesToChildSidelinesAndTheirAnnotations() throws Exception {
+		Game game = aGame();
+		Sideline root = new Sideline(game, null, "startpos", "1. Nc3", "desc");
+		Sideline child = new Sideline(game, null, "fen-nested", "1... Nf6", "nested desc");
+		when(sidelineRepository.findById(5L)).thenReturn(Optional.of(root));
+		when(sidelineRepository.findByParentSidelineId(null)).thenReturn(List.of(child)).thenReturn(List.of());
+
+		mockMvc.perform(delete("/api/games/1/sidelines/5")
+						.header("Authorization", "Bearer " + TestJwtDecoderConfig.validToken()))
+				.andExpect(status().isNoContent());
+
+		verify(annotationRepository, times(2)).deleteBySidelineId(null);
+		verify(sidelineRepository).delete(child);
+		verify(sidelineRepository).delete(root);
+	}
+
 	private static SidelineRequest validRequest() {
-		return new SidelineRequest("startpos", "1. Nc3 Nf6", "A quieter alternative to Nf3.");
+		return new SidelineRequest("startpos", "1. Nc3 Nf6", "A quieter alternative to Nf3.", null);
 	}
 
 	private static Game aGame() {

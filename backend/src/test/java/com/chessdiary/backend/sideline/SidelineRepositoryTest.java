@@ -61,6 +61,30 @@ class SidelineRepositoryTest {
 		assertEquals("fen-a", sidelines.get(0).getBranchFen());
 	}
 
+	@Test
+	void savesATwoLevelDeepSidelineTreeWithCorrectParentChain() {
+		Game game = aGame();
+		Sideline root = sidelineRepository.save(new Sideline(game, null, "fen-root", "1. Nc3", null));
+		Sideline nested = sidelineRepository.save(
+				new Sideline(game, root.getId(), "fen-nested", "1... Nf6", "Nested reply."));
+
+		List<Sideline> children = sidelineRepository.findByParentSidelineId(root.getId());
+
+		assertEquals(1, children.size());
+		assertEquals(nested.getId(), children.get(0).getId());
+		assertEquals(root.getId(), children.get(0).getParentSidelineId());
+	}
+
+	@Test
+	void findByParentSidelineIdReturnsEmptyWhenThereAreNoChildren() {
+		Game game = aGame();
+		Sideline root = sidelineRepository.save(new Sideline(game, null, "fen-root", "1. Nc3", null));
+
+		List<Sideline> children = sidelineRepository.findByParentSidelineId(root.getId());
+
+		assertEquals(0, children.size());
+	}
+
 	private Game aGame() {
 		Tournament tournament = tournamentRepository.save(new Tournament("City Open", "Warsaw", LocalDate.of(2026, 8, 1)));
 		return gameRepository.save(new Game(tournament, "1. e4 e5 2. Nf3 Nc6", Color.WHITE, "Kasparov", LocalDate.of(2026, 8, 2)));

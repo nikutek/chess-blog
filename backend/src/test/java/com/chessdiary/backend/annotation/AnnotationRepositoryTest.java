@@ -100,6 +100,22 @@ class AnnotationRepositoryTest {
 		assertEquals(2, all.size());
 	}
 
+	@Test
+	void deleteBySidelineIdRemovesOnlyThatSidelinesAnnotations() {
+		Game game = aGame();
+		annotationRepository.save(new Annotation(game, ContextType.SIDELINE, 1L, "startpos", "In sideline 1."));
+		annotationRepository.save(new Annotation(game, ContextType.SIDELINE, 2L, "startpos", "In sideline 2."));
+
+		annotationRepository.deleteBySidelineId(1L);
+
+		assertTrue(annotationRepository
+				.findByGameIdAndContextTypeAndSidelineIdAndFen(game.getId(), ContextType.SIDELINE, 1L, "startpos")
+				.isEmpty());
+		assertTrue(annotationRepository
+				.findByGameIdAndContextTypeAndSidelineIdAndFen(game.getId(), ContextType.SIDELINE, 2L, "startpos")
+				.isPresent());
+	}
+
 	private Game aGame() {
 		Tournament tournament = tournamentRepository.save(new Tournament("City Open", "Warsaw", LocalDate.of(2026, 8, 1)));
 		return gameRepository.save(new Game(tournament, "1. e4 e5 2. Nf3 Nc6", Color.WHITE, "Kasparov", LocalDate.of(2026, 8, 2)));
