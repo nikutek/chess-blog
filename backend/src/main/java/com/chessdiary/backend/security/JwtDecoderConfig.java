@@ -15,6 +15,10 @@ public class JwtDecoderConfig {
 	@Bean
 	JwtDecoder jwtDecoder(@Value("${supabase.url}") String supabaseUrl) {
 		String jwksUri = supabaseUrl + "/auth/v1/.well-known/jwks.json";
-		return NimbusJwtDecoder.withJwkSetUri(jwksUri).build();
+		// Supabase signs with ES256 (asymmetric JWT signing keys), not the RS256
+		// NimbusJwtDecoder assumes by default when given a bare JWKS URI.
+		// discoverJwsAlgorithms() reads the algorithm from each JWK's "alg" field
+		// instead of hardcoding one, so this keeps working if Supabase rotates it.
+		return NimbusJwtDecoder.withJwkSetUri(jwksUri).discoverJwsAlgorithms().build();
 	}
 }
