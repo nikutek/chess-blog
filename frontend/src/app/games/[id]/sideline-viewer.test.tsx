@@ -2,7 +2,9 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { SidelineViewer } from "./sideline-viewer";
+vi.mock("../actions", () => ({ saveAnnotation: vi.fn(), deleteAnnotation: vi.fn() }));
+
+const { SidelineViewer } = await import("./sideline-viewer");
 
 const sideline = {
   id: 7,
@@ -13,7 +15,9 @@ const sideline = {
 
 describe("SidelineViewer", () => {
   it("renders the board at the branch position and shows the description", () => {
-    const { container } = render(<SidelineViewer sideline={sideline} onBack={() => {}} />);
+    const { container } = render(
+      <SidelineViewer sideline={sideline} gameId={1} isAuthor={false} annotations={[]} onBack={() => {}} />,
+    );
 
     expect(
       container.querySelector("#sideline-viewer-piece-wN-b1"),
@@ -23,7 +27,9 @@ describe("SidelineViewer", () => {
 
   it("advances one move on the board when next is clicked", async () => {
     const user = userEvent.setup();
-    const { container } = render(<SidelineViewer sideline={sideline} onBack={() => {}} />);
+    const { container } = render(
+      <SidelineViewer sideline={sideline} gameId={1} isAuthor={false} annotations={[]} onBack={() => {}} />,
+    );
 
     await user.click(screen.getByRole("button", { name: /next/i }));
 
@@ -35,11 +41,34 @@ describe("SidelineViewer", () => {
   it("calls onBack when returning to the main game", async () => {
     const user = userEvent.setup();
     const onBack = vi.fn();
-    render(<SidelineViewer sideline={sideline} onBack={onBack} />);
+    render(<SidelineViewer sideline={sideline} gameId={1} isAuthor={false} annotations={[]} onBack={onBack} />);
 
     await user.click(screen.getByRole("button", { name: /back to main game/i }));
 
     expect(onBack).toHaveBeenCalled();
+  });
+
+  it("shows the annotation text to a reader when the selected move is annotated", async () => {
+    const user = userEvent.setup();
+    render(
+      <SidelineViewer
+        sideline={sideline}
+        gameId={1}
+        isAuthor={false}
+        annotations={[{ id: 1, fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 1 2", text: "Sharp choice." }]}
+        onBack={() => {}}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+
+    expect(screen.getByText("Sharp choice.")).toBeInTheDocument();
+  });
+
+  it("shows an annotation input to the author for the current move", () => {
+    render(<SidelineViewer sideline={sideline} gameId={1} isAuthor={true} annotations={[]} onBack={() => {}} />);
+
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
   });
 
   describe("play", () => {
@@ -52,7 +81,9 @@ describe("SidelineViewer", () => {
     });
 
     it("automatically steps through every move when play is clicked", async () => {
-      const { container } = render(<SidelineViewer sideline={sideline} onBack={() => {}} />);
+      const { container } = render(
+        <SidelineViewer sideline={sideline} gameId={1} isAuthor={false} annotations={[]} onBack={() => {}} />,
+      );
 
       fireEvent.click(screen.getByRole("button", { name: /play/i }));
 

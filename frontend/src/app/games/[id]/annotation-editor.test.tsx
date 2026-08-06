@@ -69,6 +69,18 @@ describe("AnnotationEditor", () => {
     expect(submittedFormData.get("annotationId")).toBe("5");
   });
 
+  it("includes the sidelineId when creating an annotation inside a sideline", async () => {
+    const user = userEvent.setup();
+    saveAnnotation.mockResolvedValue(undefined);
+    render(<AnnotationEditor gameId={1} fen="startpos" annotation={undefined} sidelineId={7} />);
+
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    await waitFor(() => expect(saveAnnotation).toHaveBeenCalled());
+    const submittedFormData = saveAnnotation.mock.calls[0][1] as FormData;
+    expect(submittedFormData.get("sidelineId")).toBe("7");
+  });
+
   it("deletes the annotation when delete is clicked", async () => {
     const user = userEvent.setup();
     deleteAnnotation.mockResolvedValue(undefined);

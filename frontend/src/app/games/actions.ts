@@ -110,6 +110,7 @@ export async function saveAnnotation(
   const gameId = formData.get("gameId");
   const fen = formData.get("fen");
   const annotationId = formData.get("annotationId");
+  const sidelineId = formData.get("sidelineId");
   const text = formData.get("text");
 
   if (
@@ -133,6 +134,7 @@ export async function saveAnnotation(
   const url = isUpdate
     ? `${process.env.API_URL}/api/games/${gameId}/annotations/${annotationId}`
     : `${process.env.API_URL}/api/games/${gameId}/annotations`;
+  const hasSidelineId = typeof sidelineId === "string" && sidelineId !== "";
 
   const response = await fetch(url, {
     method: isUpdate ? "PUT" : "POST",
@@ -140,7 +142,9 @@ export async function saveAnnotation(
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify(isUpdate ? { text } : { fen, text }),
+    body: JSON.stringify(
+      isUpdate ? { text } : { fen, text, ...(hasSidelineId ? { sidelineId: Number(sidelineId) } : {}) },
+    ),
   });
 
   if (!response.ok) {

@@ -113,6 +113,24 @@ describe("saveAnnotation", () => {
     expect(result).toBeUndefined();
   });
 
+  it("includes the sidelineId in the body when creating a sideline annotation", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    fetchMock.mockResolvedValue(new Response(null, { status: 201 }));
+
+    await saveAnnotation(
+      undefined,
+      formData({ gameId: "1", fen: "startpos", annotationId: "", sidelineId: "7", text: "In the sideline." }),
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/games/1/annotations"),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ fen: "startpos", text: "In the sideline.", sidelineId: 7 }),
+      }),
+    );
+  });
+
   it("puts to the annotation's own url when an annotationId is given", async () => {
     getAccessToken.mockResolvedValue("test-access-token");
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }));

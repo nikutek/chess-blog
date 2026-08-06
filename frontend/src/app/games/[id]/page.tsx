@@ -10,7 +10,13 @@ type Game = {
   status: "DRAFT" | "PUBLISHED";
 };
 
-type Annotation = { id: number; fen: string; text: string };
+type Annotation = {
+  id: number;
+  fen: string;
+  text: string;
+  contextType: "MAIN_LINE" | "SIDELINE";
+  sidelineId: number | null;
+};
 type Sideline = { id: number; branchFen: string; pgn: string; description: string | null };
 
 async function getGame(id: string, accessToken: string | undefined): Promise<Game> {

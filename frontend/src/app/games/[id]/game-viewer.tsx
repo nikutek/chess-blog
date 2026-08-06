@@ -13,7 +13,13 @@ import { SidelineViewer } from "./sideline-viewer";
 
 const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-type Annotation = { id: number; fen: string; text: string };
+type Annotation = {
+  id: number;
+  fen: string;
+  text: string;
+  contextType: "MAIN_LINE" | "SIDELINE";
+  sidelineId: number | null;
+};
 type Sideline = { id: number; branchFen: string; pgn: string; description: string | null };
 
 export function GameViewer({
@@ -34,9 +40,13 @@ export function GameViewer({
   const [activeSidelineId, setActiveSidelineId] = useState<number | null>(null);
 
   const position = moveIndex === -1 ? START_FEN : moves[moveIndex].fen;
-  const annotationByFen = useMemo(
-    () => new Map(annotations.map((annotation) => [annotation.fen, annotation])),
+  const mainLineAnnotations = useMemo(
+    () => annotations.filter((annotation) => annotation.contextType === "MAIN_LINE"),
     [annotations],
+  );
+  const annotationByFen = useMemo(
+    () => new Map(mainLineAnnotations.map((annotation) => [annotation.fen, annotation])),
+    [mainLineAnnotations],
   );
   const currentAnnotation = annotationByFen.get(position);
 
@@ -49,11 +59,24 @@ export function GameViewer({
   }, [sidelines]);
   const currentSidelines = sidelinesByFen.get(position) ?? [];
   const activeSideline = sidelines.find((sideline) => sideline.id === activeSidelineId);
+  const activeSidelineAnnotations = useMemo(
+    () =>
+      annotations.filter(
+        (annotation) => annotation.contextType === "SIDELINE" && annotation.sidelineId === activeSidelineId,
+      ),
+    [annotations, activeSidelineId],
+  );
 
   if (activeSideline) {
     return (
       <div className="w-full max-w-2xl">
-        <SidelineViewer sideline={activeSideline} onBack={() => setActiveSidelineId(null)} />
+        <SidelineViewer
+          sideline={activeSideline}
+          gameId={gameId}
+          isAuthor={isAuthor}
+          annotations={activeSidelineAnnotations}
+          onBack={() => setActiveSidelineId(null)}
+        />
       </div>
     );
   }
