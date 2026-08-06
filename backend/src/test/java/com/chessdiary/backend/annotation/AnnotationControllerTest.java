@@ -51,7 +51,7 @@ class AnnotationControllerTest {
 	void create_withoutAuthorizationHeader_returnsUnauthorized() throws Exception {
 		mockMvc.perform(post("/api/games/1/annotations")
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(objectMapper.writeValueAsString(new AnnotationRequest("startpos", "text"))))
+						.content(objectMapper.writeValueAsString(new AnnotationRequest("startpos", "text", null))))
 				.andExpect(status().isUnauthorized());
 	}
 
@@ -64,18 +64,33 @@ class AnnotationControllerTest {
 		mockMvc.perform(post("/api/games/1/annotations")
 						.header("Authorization", "Bearer " + TestJwtDecoderConfig.validToken())
 						.contentType(MediaType.APPLICATION_JSON)
-						.content(objectMapper.writeValueAsString(new AnnotationRequest("startpos", "Solid opening choice."))))
+						.content(objectMapper.writeValueAsString(new AnnotationRequest("startpos", "Solid opening choice.", null))))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.fen").value("startpos"))
-				.andExpect(jsonPath("$.text").value("Solid opening choice."));
+				.andExpect(jsonPath("$.text").value("Solid opening choice."))
+				.andExpect(jsonPath("$.contextType").value("MAIN_LINE"));
+	}
+
+	@Test
+	void create_withSidelineId_isCreatedInSidelineContext() throws Exception {
+		Game game = aGame();
+		when(gameRepository.findById(1L)).thenReturn(Optional.of(game));
+		when(annotationRepository.save(any(Annotation.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		mockMvc.perform(post("/api/games/1/annotations")
+						.header("Authorization", "Bearer " + TestJwtDecoderConfig.validToken())
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(new AnnotationRequest("startpos", "In the sideline.", 7L))))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.contextType").value("SIDELINE"))
+				.andExpect(jsonPath("$.sidelineId").value(7));
 	}
 
 	@Test
 	void list_returnsAllAnnotationsForTheGame() throws Exception {
 		Game game = aGame();
 		Annotation annotation = new Annotation(game, ContextType.MAIN_LINE, null, "startpos", "Solid opening choice.");
-		when(annotationRepository.findByGameIdAndContextType(1L, ContextType.MAIN_LINE))
-				.thenReturn(List.of(annotation));
+		when(annotationRepository.findByGameId(1L)).thenReturn(List.of(annotation));
 
 		mockMvc.perform(get("/api/games/1/annotations"))
 				.andExpect(status().isOk())
@@ -85,7 +100,7 @@ class AnnotationControllerTest {
 
 	@Test
 	void list_whenNoAnnotationsExist_returnsEmptyList() throws Exception {
-		when(annotationRepository.findByGameIdAndContextType(1L, ContextType.MAIN_LINE)).thenReturn(List.of());
+		when(annotationRepository.findByGameId(1L)).thenReturn(List.of());
 
 		mockMvc.perform(get("/api/games/1/annotations"))
 				.andExpect(status().isOk())

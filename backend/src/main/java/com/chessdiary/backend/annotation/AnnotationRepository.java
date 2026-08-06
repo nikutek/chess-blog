@@ -10,5 +10,5 @@ public interface AnnotationRepository extends JpaRepository<Annotation, Long> {
 	Optional<Annotation> findByGameIdAndContextTypeAndSidelineIdAndFen(
 			Long gameId, ContextType contextType, Long sidelineId, String fen);
 
-	List<Annotation> findByGameIdAndContextType(Long gameId, ContextType contextType);
+	List<Annotation> findByGameId(Long gameId);
 }

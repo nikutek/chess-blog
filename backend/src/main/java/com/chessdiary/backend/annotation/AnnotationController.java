@@ -19,8 +19,6 @@ import com.chessdiary.backend.game.GameRepository;
 
 import jakarta.validation.Valid;
 
-// Only MAIN_LINE annotations are supported for now (sidelineId always null).
-// Sideline support is added in a later slice, reusing this same entity/schema (see ADR-0001).
 @RestController
 @RequestMapping("/api/games/{gameId}/annotations")
 public class AnnotationController {
@@ -38,13 +36,14 @@ public class AnnotationController {
 	public Annotation create(@PathVariable Long gameId, @Valid @RequestBody AnnotationRequest request) {
 		Game game = gameRepository.findById(gameId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "game not found"));
-		Annotation annotation = new Annotation(game, ContextType.MAIN_LINE, null, request.fen(), request.text());
+		ContextType contextType = request.sidelineId() != null ? ContextType.SIDELINE : ContextType.MAIN_LINE;
+		Annotation annotation = new Annotation(game, contextType, request.sidelineId(), request.fen(), request.text());
 		return annotationRepository.save(annotation);
 	}
 
 	@GetMapping
 	public List<Annotation> list(@PathVariable Long gameId) {
-		return annotationRepository.findByGameIdAndContextType(gameId, ContextType.MAIN_LINE);
+		return annotationRepository.findByGameId(gameId);
 	}
 
 	@PutMapping("/{id}")
