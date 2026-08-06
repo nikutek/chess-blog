@@ -6,7 +6,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -30,7 +29,6 @@ public class Sideline {
 	@Column(name = "branch_fen", nullable = false)
 	private String branchFen;
 
-	@Lob
 	@Column(nullable = false)
 	private String pgn;
 
