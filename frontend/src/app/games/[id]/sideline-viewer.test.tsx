@@ -2,7 +2,12 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../actions", () => ({ saveAnnotation: vi.fn(), deleteAnnotation: vi.fn() }));
+vi.mock("../actions", () => ({
+  saveAnnotation: vi.fn(),
+  deleteAnnotation: vi.fn(),
+  saveSideline: vi.fn(),
+  deleteSideline: vi.fn(),
+}));
 
 const { SidelineViewer } = await import("./sideline-viewer");
 
@@ -69,6 +74,48 @@ describe("SidelineViewer", () => {
     render(<SidelineViewer sideline={sideline} gameId={1} isAuthor={true} annotations={[]} onBack={() => {}} />);
 
     expect(screen.getByRole("textbox")).toBeInTheDocument();
+  });
+
+  it("shows a nested sideline indicator at the branch point and enters it when clicked", async () => {
+    const user = userEvent.setup();
+    const onEnterSideline = vi.fn();
+    const nested = {
+      id: 12,
+      branchFen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 1 2",
+      pgn: "1... c5",
+      description: "Even sharper.",
+    };
+    render(
+      <SidelineViewer
+        sideline={sideline}
+        gameId={1}
+        isAuthor={false}
+        annotations={[]}
+        childSidelines={[nested]}
+        onEnterSideline={onEnterSideline}
+        onBack={() => {}}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await user.click(screen.getByRole("button", { name: /sideline/i }));
+
+    expect(onEnterSideline).toHaveBeenCalledWith(12);
+  });
+
+  it("shows a custom back label when returning to a parent sideline", () => {
+    render(
+      <SidelineViewer
+        sideline={sideline}
+        gameId={1}
+        isAuthor={false}
+        annotations={[]}
+        onBack={() => {}}
+        backLabel="Back to previous sideline"
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /back to previous sideline/i })).toBeInTheDocument();
   });
 
   describe("play", () => {

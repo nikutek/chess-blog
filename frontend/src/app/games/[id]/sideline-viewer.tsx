@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { parseSideline } from "@/lib/chess/parse-pgn";
 
 import { AnnotationEditor } from "./annotation-editor";
+import { SidelineEditor } from "./sideline-editor";
 
 const PLAY_STEP_MS = 800;
 
@@ -18,13 +19,19 @@ export function SidelineViewer({
   gameId,
   isAuthor,
   annotations,
+  childSidelines = [],
+  onEnterSideline,
   onBack,
+  backLabel = "Back to main game",
 }: {
   sideline: Sideline;
   gameId: number;
   isAuthor: boolean;
   annotations: Annotation[];
+  childSidelines?: Sideline[];
+  onEnterSideline?: (id: number) => void;
   onBack: () => void;
+  backLabel?: string;
 }) {
   const moves = useMemo(() => parseSideline(sideline.branchFen, sideline.pgn), [sideline]);
   const [moveIndex, setMoveIndex] = useState(-1);
@@ -36,6 +43,7 @@ export function SidelineViewer({
     [annotations],
   );
   const currentAnnotation = annotationByFen.get(position);
+  const childSidelinesAtPosition = childSidelines.filter((child) => child.branchFen === position);
 
   useEffect(() => {
     if (!isPlaying || moveIndex >= moves.length - 1) {
@@ -90,6 +98,17 @@ export function SidelineViewer({
         >
           Play
         </Button>
+        {childSidelinesAtPosition.map((child, index) => (
+          <button
+            key={child.id}
+            type="button"
+            aria-label={`View sideline ${index + 1}`}
+            onClick={() => onEnterSideline?.(child.id)}
+            className="rounded px-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            ⑂
+          </button>
+        ))}
       </div>
       {isAuthor ? (
         <AnnotationEditor
@@ -102,8 +121,28 @@ export function SidelineViewer({
       ) : (
         currentAnnotation && <p>{currentAnnotation.text}</p>
       )}
+      {isAuthor && moveIndex !== -1 && (
+        <div className="flex flex-col gap-2">
+          {childSidelinesAtPosition.map((child) => (
+            <SidelineEditor
+              key={child.id}
+              gameId={gameId}
+              branchFen={position}
+              sideline={child}
+              parentSidelineId={sideline.id}
+            />
+          ))}
+          <SidelineEditor
+            key={`new-${position}`}
+            gameId={gameId}
+            branchFen={position}
+            sideline={undefined}
+            parentSidelineId={sideline.id}
+          />
+        </div>
+      )}
       <Button type="button" variant="outline" onClick={onBack}>
-        Back to main game
+        {backLabel}
       </Button>
     </div>
   );

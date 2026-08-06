@@ -71,6 +71,19 @@ describe("SidelineEditor", () => {
     expect(submittedFormData.get("sidelineId")).toBe("7");
   });
 
+  it("includes the parentSidelineId when creating a nested sideline", async () => {
+    const user = userEvent.setup();
+    saveSideline.mockResolvedValue(undefined);
+    render(<SidelineEditor gameId={1} branchFen="startpos" sideline={undefined} parentSidelineId={3} />);
+
+    await user.type(screen.getByLabelText(/pgn/i), "1... Nf6");
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    await waitFor(() => expect(saveSideline).toHaveBeenCalled());
+    const submittedFormData = saveSideline.mock.calls[0][1] as FormData;
+    expect(submittedFormData.get("parentSidelineId")).toBe("3");
+  });
+
   it("deletes the sideline when delete is clicked", async () => {
     const user = userEvent.setup();
     deleteSideline.mockResolvedValue(undefined);

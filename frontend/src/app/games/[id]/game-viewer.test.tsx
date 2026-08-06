@@ -167,7 +167,7 @@ describe("GameViewer", () => {
         gameId={1}
         isAuthor={false}
         annotations={[]}
-        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead." }]}
+        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead.", parentSidelineId: null }]}
       />,
     );
 
@@ -185,7 +185,7 @@ describe("GameViewer", () => {
         gameId={1}
         isAuthor={false}
         annotations={[]}
-        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead." }]}
+        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead.", parentSidelineId: null }]}
       />,
     );
 
@@ -204,7 +204,7 @@ describe("GameViewer", () => {
         gameId={1}
         isAuthor={false}
         annotations={[]}
-        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead." }]}
+        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead.", parentSidelineId: null }]}
       />,
     );
 
@@ -228,7 +228,7 @@ describe("GameViewer", () => {
         annotations={[
           { id: 1, fen: fenAfterC5, text: "Sharp choice.", contextType: "SIDELINE", sidelineId: 7 },
         ]}
-        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead." }]}
+        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead.", parentSidelineId: null }]}
       />,
     );
 
@@ -248,7 +248,7 @@ describe("GameViewer", () => {
         gameId={1}
         isAuthor={true}
         annotations={[]}
-        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead." }]}
+        sidelines={[{ id: 7, branchFen: fenAfterE4, pgn: "1... c5", description: "Sicilian instead.", parentSidelineId: null }]}
       />,
     );
 
@@ -256,6 +256,49 @@ describe("GameViewer", () => {
     await user.click(screen.getByRole("button", { name: /sideline/i }));
 
     expect(screen.getByRole("textbox")).toBeInTheDocument();
+  });
+
+  it("navigates into a nested sideline and back to the parent sideline", async () => {
+    const user = userEvent.setup();
+    const fenAfterE4 = parsePgn("1. e4 e5 2. Nf3 Nc6")[0].fen;
+    const fenAfterC5 = parseSideline(fenAfterE4, "1... c5")[0].fen;
+    const topLevel = {
+      id: 7,
+      branchFen: fenAfterE4,
+      pgn: "1... c5",
+      description: "Sicilian instead.",
+      parentSidelineId: null,
+    };
+    const nested = {
+      id: 12,
+      branchFen: fenAfterC5,
+      pgn: "2. Nf3",
+      description: "Open Sicilian.",
+      parentSidelineId: 7,
+    };
+    render(
+      <GameViewer
+        pgn="1. e4 e5 2. Nf3 Nc6"
+        gameId={1}
+        isAuthor={false}
+        annotations={[]}
+        sidelines={[topLevel, nested]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await user.click(screen.getByRole("button", { name: /sideline/i }));
+    expect(screen.getByText("Sicilian instead.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await user.click(screen.getByRole("button", { name: /sideline/i }));
+    expect(screen.getByText("Open Sicilian.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /back to previous sideline/i }));
+    expect(screen.getByText("Sicilian instead.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /back to main game/i }));
+    expect(screen.getByText("Nf3")).toBeInTheDocument();
   });
 
   it("shows a sideline creation form to the author for the selected move", async () => {

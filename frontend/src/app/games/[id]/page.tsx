@@ -17,7 +17,13 @@ type Annotation = {
   contextType: "MAIN_LINE" | "SIDELINE";
   sidelineId: number | null;
 };
-type Sideline = { id: number; branchFen: string; pgn: string; description: string | null };
+type Sideline = {
+  id: number;
+  branchFen: string;
+  pgn: string;
+  description: string | null;
+  parentSidelineId: number | null;
+};
 
 async function getGame(id: string, accessToken: string | undefined): Promise<Game> {
   const response = await fetch(`${process.env.API_URL}/api/games/${id}`, {

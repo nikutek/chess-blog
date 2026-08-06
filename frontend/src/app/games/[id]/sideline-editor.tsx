@@ -15,10 +15,12 @@ export function SidelineEditor({
   gameId,
   branchFen,
   sideline,
+  parentSidelineId,
 }: {
   gameId: number;
   branchFen: string;
   sideline: Sideline | undefined;
+  parentSidelineId?: number;
 }) {
   const [saveState, saveAction, savePending] = useActionState(saveSideline, undefined);
   const [deleteState, deleteAction, deletePending] = useActionState(deleteSideline, undefined);
@@ -31,6 +33,7 @@ export function SidelineEditor({
         <input type="hidden" name="gameId" value={gameId} />
         <input type="hidden" name="branchFen" value={branchFen} />
         <input type="hidden" name="sidelineId" value={sideline?.id ?? ""} />
+        <input type="hidden" name="parentSidelineId" value={parentSidelineId ?? ""} />
         <div className="flex flex-col gap-1">
           <Label htmlFor={`${fieldId}-pgn`}>Sideline PGN</Label>
           <Textarea

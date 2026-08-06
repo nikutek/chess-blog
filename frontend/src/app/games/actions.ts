@@ -161,6 +161,7 @@ export async function saveSideline(
   const gameId = formData.get("gameId");
   const branchFen = formData.get("branchFen");
   const sidelineId = formData.get("sidelineId");
+  const parentSidelineId = formData.get("parentSidelineId");
   const pgn = formData.get("pgn");
   const description = formData.get("description");
 
@@ -186,6 +187,7 @@ export async function saveSideline(
   const url = isUpdate
     ? `${process.env.API_URL}/api/games/${gameId}/sidelines/${sidelineId}`
     : `${process.env.API_URL}/api/games/${gameId}/sidelines`;
+  const hasParentSidelineId = typeof parentSidelineId === "string" && parentSidelineId !== "";
 
   const response = await fetch(url, {
     method: isUpdate ? "PUT" : "POST",
@@ -193,7 +195,11 @@ export async function saveSideline(
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify(isUpdate ? { pgn, description } : { branchFen, pgn, description }),
+    body: JSON.stringify(
+      isUpdate
+        ? { pgn, description }
+        : { branchFen, pgn, description, ...(hasParentSidelineId ? { parentSidelineId: Number(parentSidelineId) } : {}) },
+    ),
   });
 
   if (!response.ok) {

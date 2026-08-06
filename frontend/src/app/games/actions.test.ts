@@ -218,6 +218,31 @@ describe("saveSideline", () => {
     expect(result).toBeUndefined();
   });
 
+  it("includes the parentSidelineId when creating a nested sideline", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    fetchMock.mockResolvedValue(new Response(null, { status: 201 }));
+
+    await saveSideline(
+      undefined,
+      formData({
+        gameId: "1",
+        sidelineId: "",
+        parentSidelineId: "3",
+        branchFen: "startpos",
+        pgn: "1... Nf6",
+        description: "",
+      }),
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/games/1/sidelines"),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ branchFen: "startpos", pgn: "1... Nf6", description: "", parentSidelineId: 3 }),
+      }),
+    );
+  });
+
   it("puts to the sideline's own url when a sidelineId is given", async () => {
     getAccessToken.mockResolvedValue("test-access-token");
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }));

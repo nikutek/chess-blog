@@ -20,7 +20,13 @@ type Annotation = {
   contextType: "MAIN_LINE" | "SIDELINE";
   sidelineId: number | null;
 };
-type Sideline = { id: number; branchFen: string; pgn: string; description: string | null };
+type Sideline = {
+  id: number;
+  branchFen: string;
+  pgn: string;
+  description: string | null;
+  parentSidelineId: number | null;
+};
 
 export function GameViewer({
   pgn,
@@ -37,7 +43,8 @@ export function GameViewer({
 }) {
   const moves = useMemo(() => parsePgn(pgn), [pgn]);
   const [moveIndex, setMoveIndex] = useState(-1);
-  const [activeSidelineId, setActiveSidelineId] = useState<number | null>(null);
+  const [sidelineStack, setSidelineStack] = useState<number[]>([]);
+  const activeSidelineId = sidelineStack.at(-1) ?? null;
 
   const position = moveIndex === -1 ? START_FEN : moves[moveIndex].fen;
   const mainLineAnnotations = useMemo(
@@ -50,13 +57,14 @@ export function GameViewer({
   );
   const currentAnnotation = annotationByFen.get(position);
 
+  const topLevelSidelines = useMemo(() => sidelines.filter((sideline) => sideline.parentSidelineId === null), [sidelines]);
   const sidelinesByFen = useMemo(() => {
     const map = new Map<string, Sideline[]>();
-    for (const sideline of sidelines) {
+    for (const sideline of topLevelSidelines) {
       map.set(sideline.branchFen, [...(map.get(sideline.branchFen) ?? []), sideline]);
     }
     return map;
-  }, [sidelines]);
+  }, [topLevelSidelines]);
   const currentSidelines = sidelinesByFen.get(position) ?? [];
   const activeSideline = sidelines.find((sideline) => sideline.id === activeSidelineId);
   const activeSidelineAnnotations = useMemo(
@@ -65,6 +73,10 @@ export function GameViewer({
         (annotation) => annotation.contextType === "SIDELINE" && annotation.sidelineId === activeSidelineId,
       ),
     [annotations, activeSidelineId],
+  );
+  const childSidelines = useMemo(
+    () => sidelines.filter((sideline) => sideline.parentSidelineId === activeSidelineId),
+    [sidelines, activeSidelineId],
   );
 
   if (activeSideline) {
@@ -75,7 +87,10 @@ export function GameViewer({
           gameId={gameId}
           isAuthor={isAuthor}
           annotations={activeSidelineAnnotations}
-          onBack={() => setActiveSidelineId(null)}
+          childSidelines={childSidelines}
+          onEnterSideline={(id) => setSidelineStack((stack) => [...stack, id])}
+          onBack={() => setSidelineStack((stack) => stack.slice(0, -1))}
+          backLabel={sidelineStack.length > 1 ? "Back to previous sideline" : "Back to main game"}
         />
       </div>
     );
@@ -143,7 +158,7 @@ export function GameViewer({
                   key={sideline.id}
                   type="button"
                   aria-label={`View sideline ${sidelineIndex + 1}`}
-                  onClick={() => setActiveSidelineId(sideline.id)}
+                  onClick={() => setSidelineStack([sideline.id])}
                   className="ml-1 rounded px-1 text-xs text-muted-foreground hover:text-foreground"
                 >
                   ⑂
