@@ -201,6 +201,32 @@ class GameControllerTest {
 				.andExpect(jsonPath("$.status").value("DRAFT"));
 	}
 
+	@Test
+	void recent_returnsPublishedGamesOrderedByDateDescLimitedToParam() throws Exception {
+		Tournament tournament = new Tournament("City Open", "Warsaw", LocalDate.of(2026, 8, 1));
+		Game newest = new Game(tournament, "1. e4 e5", Color.WHITE, "Kasparov", LocalDate.of(2026, 8, 10));
+		newest.publish();
+		Game older = new Game(tournament, "1. d4 d5", Color.BLACK, "Karpov", LocalDate.of(2026, 8, 2));
+		older.publish();
+		when(gameRepository.findByStatusOrderByDateDesc(Status.PUBLISHED, org.springframework.data.domain.PageRequest.of(0, 2)))
+				.thenReturn(List.of(newest, older));
+
+		mockMvc.perform(get("/api/games").param("limit", "2"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].opponent").value("Kasparov"))
+				.andExpect(jsonPath("$[1].opponent").value("Karpov"));
+	}
+
+	@Test
+	void recent_withoutLimitParam_defaultsToFour() throws Exception {
+		when(gameRepository.findByStatusOrderByDateDesc(Status.PUBLISHED, org.springframework.data.domain.PageRequest.of(0, 4)))
+				.thenReturn(List.of());
+
+		mockMvc.perform(get("/api/games"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$").isArray());
+	}
+
 	private static GameRequest validRequest() {
 		return new GameRequest(1L, "1. e4 e5 2. Nf3 Nc6", Color.WHITE, "Kasparov", LocalDate.of(2026, 8, 2));
 	}

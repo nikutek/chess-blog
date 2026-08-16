@@ -2,6 +2,7 @@ package com.chessdiary.backend.game;
 
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -65,6 +67,14 @@ public class GameController {
 		Game game = findGameOrThrow(id);
 		game.unpublish();
 		return gameRepository.save(game);
+	}
+
+	// A literal "/games" collection route, kept distinct from "/games/{id}"
+	// rather than "/games/recent" (which ambiguously overlapped with the
+	// {id} path variable at request-mapping time).
+	@GetMapping("/games")
+	public List<Game> recent(@RequestParam(defaultValue = "4") int limit) {
+		return gameRepository.findByStatusOrderByDateDesc(Status.PUBLISHED, PageRequest.of(0, limit));
 	}
 
 	@GetMapping("/tournaments/{tournamentId}/games")
