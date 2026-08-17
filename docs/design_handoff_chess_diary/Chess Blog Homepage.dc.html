@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT"
+  }
+}
+</script>
+<style>body{margin:0}</style>
+</helmet>
+<div style="background:linear-gradient(160deg,#1a1a22 0%,#0d0d0e 50%,#1b1320 100%);color:#f5f4f2;font-family:system-ui,-apple-system,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:24px 64px;border-bottom:1px solid rgba(255,255,255,.08);flex:none">
+    <div style="font-size:18px;font-weight:700;letter-spacing:-0.3px">My Chess Journey</div>
+    <div style="display:flex;gap:32px;font-size:14px;color:rgba(245,244,241,.65)">
+      <span>Analizy</span><span>Debiuty</span><span>Końcówki</span><span>O mnie</span>
+    </div>
+  </div>
+
+  <div style="flex:1;min-height:0;padding:0 64px;display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:40px;align-items:center">
+    <div style="min-height:0;max-height:100%;display:flex;flex-direction:column;justify-content:center;padding:16px 0">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#d6483a;font-weight:700;margin-bottom:clamp(4px,1vh,10px);flex:none">Analiza partii · 1800+</div>
+      <div style="font-size:clamp(22px,4.5vh,38px);line-height:1.08;font-weight:800;letter-spacing:-1px;margin-bottom:clamp(4px,1vh,10px);flex:none">Zobacz partię,<br>zanim ją zagrasz</div>
+      <div style="font-size:clamp(11.5px,1.1vh + 6px,13.5px);line-height:1.5;color:rgba(245,244,241,.6);max-width:420px;margin-bottom:clamp(8px,2vh,18px);flex:none">Rozbieram debiuty i partie krok po kroku — na poziomie gracza klubowego, nie arcymistrza. Najedź na analizę obok, a szachownica odegra jej pierwsze ruchy.</div>
+
+      <div style="font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,244,241,.45);font-weight:700;margin-bottom:clamp(4px,1vh,10px);flex:none">Ostatnie analizy</div>
+      <div style="display:flex;flex-direction:column;gap:clamp(4px,0.8vh,8px);min-height:0;overflow:hidden">
+        <sc-for list="{{ analyses }}" as="item" hint-placeholder-count="4">
+          <div style="{{ item.style }}" onMouseEnter="{{ item.onEnter }}" onMouseLeave="{{ item.onLeave }}">
+            <div style="min-width:0;flex:1">
+              <div style="font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#d6483a;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ item.tag }}</div>
+              <div style="{{ item.titleStyle }}">{{ item.title }}</div>
+            </div>
+            <div style="font-size:12px;font-family:ui-monospace,monospace;color:rgba(245,244,241,.4);white-space:nowrap">{{ item.desc }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="min-width:0;align-self:stretch;display:flex;flex-direction:column;justify-content:center">
+      <div ref="{{ boardContainerRef }}" style="width:100%;height:82%;position:relative"></div>
+      <div style="margin-top:4px;font-size:12px;color:rgba(245,244,241,.45);text-align:center;flex:none">{{ caption }}</div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;padding:18px 64px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:rgba(245,244,241,.4);flex:none">
+    <span>© 2026 My Chess Journey</span>
+    <span>Analizy · Debiuty · Końcówki</span>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.boardContainerRef = React.createRef();
+    this.state = { activeIndex: null };
+    this.analysesData = [
+      { title:'Włoska: atak na f7', tag:'Debiuty', desc:'e4 e5 Nf3', moves:[{from:'e2',to:'e4'},{from:'e7',to:'e5'},{from:'g1',to:'f3'}] },
+      { title:'Sycylijska: Najdorf', tag:'Debiuty', desc:'e4 c5 Nf3', moves:[{from:'e2',to:'e4'},{from:'c7',to:'c5'},{from:'g1',to:'f3'}] },
+      { title:'System Londyński', tag:'Debiuty', desc:'d4 d5 Bf4', moves:[{from:'d2',to:'d4'},{from:'d7',to:'d5'},{from:'c1',to:'f4'}] },
+      { title:'Obrona francuska', tag:'Debiuty', desc:'e4 e6 d4', moves:[{from:'e2',to:'e4'},{from:'e7',to:'e6'},{from:'d2',to:'d4'}] }
+    ];
+    this.hoverTimeouts = [];
+    this.pieces = [];
+    this.piecesBySquare = {};
+    this.activeAnimations = [];
+  }
+
+  componentDidMount(){ this.initScene(); }
+
+  componentWillUnmount(){
+    if(this.rafId) cancelAnimationFrame(this.rafId);
+    if(this.resizeObserver) this.resizeObserver.disconnect();
+    this.hoverTimeouts.forEach(clearTimeout);
+    if(this.renderer) this.renderer.dispose();
+  }
+
+  async initScene(){
+    const THREE = await import('three');
+    this.THREE = THREE;
+    const container = this.boardContainerRef.current;
+    if(!container || container.dataset.inited) return;
+    container.dataset.inited = '1';
+    container.replaceChildren();
+
+    const scene = new THREE.Scene();
+    scene.background = null;
+    const camera = new THREE.PerspectiveCamera(38, container.clientWidth/container.clientHeight, 0.1, 100);
+    this.frameCamera = () => {
+      const w = container.clientWidth, h = container.clientHeight;
+      if(!w || !h) return;
+      camera.aspect = w/h;
+      const radius = 6.1; // board half-diagonal, keeps corners inside while rotating
+      const vFov = THREE.MathUtils.degToRad(camera.fov)/2;
+      const hFov = Math.atan(Math.tan(vFov)*camera.aspect);
+      const dist = radius / Math.sin(Math.min(vFov,hFov)) * 0.96;
+      const elev = THREE.MathUtils.degToRad(38);
+      const azim = THREE.MathUtils.degToRad(18); // slight side angle, from White's side
+      const flat = Math.cos(elev)*dist;
+      camera.position.set(Math.sin(azim)*flat, Math.sin(elev)*dist + 0.3, -Math.cos(azim)*flat);
+      camera.lookAt(0,0.1,0);
+      camera.updateProjectionMatrix();
+    };
+    this.frameCamera();
+    const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.domElement.style.cssText = 'display:block;width:100%;height:100%;position:absolute;inset:0';
+    container.appendChild(renderer.domElement);
+    this.renderer = renderer; this.scene = scene; this.camera = camera;
+
+    scene.add(new THREE.AmbientLight(0xffffff,0.65));
+    const dir = new THREE.DirectionalLight(0xffffff,0.9);
+    dir.position.set(4,8,5);
+    scene.add(dir);
+
+    const boardGroup = new THREE.Group();
+    scene.add(boardGroup);
+    this.boardGroup = boardGroup;
+
+    const baseMat = new THREE.MeshStandardMaterial({ color:0x1c1c1e, roughness:0.8 });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(8.6,0.3,8.6), baseMat);
+    base.position.y = -0.15;
+    boardGroup.add(base);
+
+    const lightSqMat = new THREE.MeshStandardMaterial({ color:0xf2efe8, roughness:0.55 });
+    const darkSqMat = new THREE.MeshStandardMaterial({ color:0x2a2a2d, roughness:0.55 });
+    const sqGeo = new THREE.BoxGeometry(0.98,0.05,0.98);
+    for(let col=0; col<8; col++){
+      for(let row=0; row<8; row++){
+        const mat = (col+row)%2===0 ? lightSqMat : darkSqMat;
+        const sq = new THREE.Mesh(sqGeo, mat);
+        sq.position.set(col-3.5, 0.025, row-3.5);
+        boardGroup.add(sq);
+      }
+    }
+
+    const marker = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.42,0.42,0.02,24),
+      new THREE.MeshBasicMaterial({ color:0xd6483a, transparent:true, opacity:0 })
+    );
+    marker.position.y = 0.06;
+    boardGroup.add(marker);
+    this.marker = marker;
+
+    const lightMat = new THREE.MeshStandardMaterial({ color:0xe8e1d2, roughness:0.35, metalness:0.05 });
+    const darkMat = new THREE.MeshStandardMaterial({ color:0x323236, roughness:0.3, metalness:0.08 });
+
+    const backRank = ['rook','knight','bishop','queen','king','bishop','knight','rook'];
+    const files = 'abcdefgh';
+    const initial = [];
+    for(let col=0; col<8; col++){
+      initial.push({ type:backRank[col], color:'light', col, row:0 });
+      initial.push({ type:'pawn', color:'light', col, row:1 });
+      initial.push({ type:'pawn', color:'dark', col, row:6 });
+      initial.push({ type:backRank[col], color:'dark', col, row:7 });
+    }
+
+    this.pieces = [];
+    this.piecesBySquare = {};
+    this.initialPositions = {};
+    initial.forEach(spec=>{
+      const mat = spec.color==='light' ? lightMat : darkMat;
+      const mesh = this.createPiece(spec.type, mat);
+      const sq = files[spec.col] + (spec.row+1);
+      mesh.position.set(spec.col-3.5, 0, spec.row-3.5);
+      mesh.userData.home = sq;
+      boardGroup.add(mesh);
+      this.pieces.push(mesh);
+      this.piecesBySquare[sq] = mesh;
+      this.initialPositions[sq] = mesh.position.clone();
+    });
+
+    let lastT = performance.now();
+    const animate = () => {
+      this.rafId = requestAnimationFrame(animate);
+      const now = performance.now();
+      const delta = Math.min(0.1, (now-lastT)/1000);
+      lastT = now;
+      if(this.state.activeIndex===null){
+        boardGroup.rotation.y += delta*0.08;
+      }
+      this.activeAnimations = this.activeAnimations.filter(a=>{
+        const t = Math.min(1, (performance.now()-a.start)/a.duration);
+        const ease = t<0.5 ? 2*t*t : -1+(4-2*t)*t;
+        const pos = new THREE.Vector3().lerpVectors(a.from, a.to, ease);
+        pos.y = Math.sin(ease*Math.PI)*0.4;
+        a.mesh.position.copy(pos);
+        return t<1;
+      });
+      if(marker.material.opacity>0){
+        marker.material.opacity = Math.max(0, marker.material.opacity - delta*0.7);
+      }
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    this.lastSize = { w:0, h:0 };
+    this.resizeObserver = new ResizeObserver(()=>{
+      if(this.resizeRaf) cancelAnimationFrame(this.resizeRaf);
+      this.resizeRaf = requestAnimationFrame(()=>{
+        const w = container.clientWidth, h = container.clientHeight;
+        if(!w || !h || (w===this.lastSize.w && h===this.lastSize.h)) return;
+        this.lastSize = { w, h };
+        renderer.setSize(w, h);
+        this.frameCamera();
+      });
+    });
+    this.resizeObserver.observe(container);
+  }
+
+  lathe(profile, mat, segments){
+    const THREE = this.THREE;
+    const pts = profile.map(p=>new THREE.Vector2(p[0],p[1]));
+    const geo = new THREE.LatheGeometry(pts, segments||40);
+    return new THREE.Mesh(geo, mat);
+  }
+
+  createPiece(type, mat){
+    const THREE = this.THREE;
+    const g = new THREE.Group();
+    // classic Staunton-style lathe profiles: [radius, height]
+    const base = [[0,0],[0.30,0],[0.31,0.03],[0.29,0.07],[0.24,0.10],[0.21,0.13]];
+    if(type==='pawn'){
+      g.add(this.lathe(base.concat([[0.15,0.17],[0.10,0.28],[0.085,0.40],[0.13,0.44],[0.15,0.47],[0.10,0.50],[0,0.50]]), mat));
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.145,24,18), mat);
+      head.position.y = 0.60; g.add(head);
+    } else if(type==='rook'){
+      g.add(this.lathe(base.concat([[0.17,0.18],[0.14,0.30],[0.13,0.52],[0.145,0.60],[0.21,0.64],[0.215,0.72],[0.185,0.72],[0.185,0.68],[0,0.68]]), mat));
+      // battlements
+      for(let i=0;i<5;i++){
+        const b = new THREE.Mesh(new THREE.BoxGeometry(0.09,0.09,0.05), mat);
+        const a = i/5*Math.PI*2;
+        b.position.set(Math.cos(a)*0.185, 0.755, Math.sin(a)*0.185);
+        b.rotation.y = -a + Math.PI/2;
+        g.add(b);
+      }
+    } else if(type==='bishop'){
+      g.add(this.lathe(base.concat([[0.15,0.18],[0.10,0.32],[0.08,0.52],[0.13,0.58],[0.145,0.62],[0.10,0.66],[0.115,0.72],[0.09,0.82],[0.04,0.90],[0,0.92]]), mat));
+      const tip = new THREE.Mesh(new THREE.SphereGeometry(0.05,16,12), mat);
+      tip.position.y = 0.96; g.add(tip);
+    } else if(type==='knight'){
+      g.add(this.lathe(base.concat([[0.17,0.18],[0.15,0.26],[0.14,0.34],[0.17,0.38],[0.18,0.42],[0,0.42]]), mat));
+      // sculpted head: neck arching forward, muzzle, ears, mane hint
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.10,0.145,0.42,20), mat);
+      neck.position.set(0,0.60,-0.02); neck.rotation.x = 0.28; g.add(neck);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.115,20,16), mat);
+      head.scale.set(0.85,0.9,1.35);
+      head.position.set(0,0.82,0.10); head.rotation.x = 0.5; g.add(head);
+      const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.055,0.075,0.20,16), mat);
+      muzzle.position.set(0,0.76,0.24); muzzle.rotation.x = 1.15; g.add(muzzle);
+      const earL = new THREE.Mesh(new THREE.ConeGeometry(0.035,0.11,10), mat);
+      earL.position.set(0.055,0.93,0.02); earL.rotation.x = -0.25; g.add(earL);
+      const earR = earL.clone(); earR.position.x = -0.055; g.add(earR);
+      const mane = new THREE.Mesh(new THREE.SphereGeometry(0.09,16,12), mat);
+      mane.scale.set(0.5,1.1,0.7); mane.position.set(0,0.68,-0.12); g.add(mane);
+    } else if(type==='queen'){
+      g.add(this.lathe(base.concat([[0.17,0.18],[0.11,0.34],[0.085,0.58],[0.14,0.68],[0.16,0.74],[0.11,0.78],[0.15,0.86],[0.17,0.92],[0.10,0.96],[0,0.98]]), mat));
+      // coronet points
+      for(let i=0;i<8;i++){
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.028,10,8), mat);
+        const a = i/8*Math.PI*2;
+        p.position.set(Math.cos(a)*0.145, 0.95, Math.sin(a)*0.145);
+        g.add(p);
+      }
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.055,16,12), mat);
+      orb.position.y = 1.02; g.add(orb);
+    } else if(type==='king'){
+      g.add(this.lathe(base.concat([[0.18,0.18],[0.12,0.36],[0.09,0.62],[0.15,0.72],[0.17,0.78],[0.12,0.82],[0.16,0.90],[0.17,0.96],[0.09,1.00],[0.11,1.04],[0,1.06]]), mat));
+      const v = new THREE.Mesh(new THREE.BoxGeometry(0.05,0.22,0.05), mat); v.position.y=1.17; g.add(v);
+      const h = new THREE.Mesh(new THREE.BoxGeometry(0.16,0.05,0.05), mat); h.position.y=1.20; g.add(h);
+    }
+    return g;
+  }
+
+  squarePos(sq){
+    const col = sq.charCodeAt(0)-97;
+    const row = parseInt(sq[1],10)-1;
+    return new this.THREE.Vector3(col-3.5, 0, row-3.5);
+  }
+
+  resetBoard(){
+    if(!this.pieces.length) return;
+    this.activeAnimations = [];
+    this.pieces.forEach(mesh=>{
+      mesh.position.copy(this.initialPositions[mesh.userData.home]);
+    });
+    this.piecesBySquare = {};
+    this.pieces.forEach(mesh=> this.piecesBySquare[mesh.userData.home] = mesh);
+    if(this.marker) this.marker.material.opacity = 0;
+  }
+
+  animateMove(move){
+    const mesh = this.piecesBySquare[move.from];
+    if(!mesh) return;
+    delete this.piecesBySquare[move.from];
+    this.piecesBySquare[move.to] = mesh;
+    const from = mesh.position.clone();
+    const to = this.squarePos(move.to);
+    this.activeAnimations.push({ mesh, from, to, start: performance.now(), duration: 520 });
+    if(this.marker){
+      this.marker.position.set(to.x, 0.06, to.z);
+      this.marker.material.opacity = 0.7;
+    }
+  }
+
+  handleEnter(index){
+    this.hoverTimeouts.forEach(clearTimeout);
+    this.hoverTimeouts = [];
+    this.setState({ activeIndex: index });
+    this.resetBoard();
+    const moves = this.analysesData[index].moves;
+    moves.forEach((mv,i)=>{
+      const id = setTimeout(()=>this.animateMove(mv), 350+i*750);
+      this.hoverTimeouts.push(id);
+    });
+  }
+
+  handleLeave(){
+    this.hoverTimeouts.forEach(clearTimeout);
+    this.hoverTimeouts = [];
+    this.setState({ activeIndex: null });
+    this.resetBoard();
+  }
+
+  renderVals(){
+    const active = this.state.activeIndex;
+    const analyses = this.analysesData.map((a,i)=>({
+      title: a.title, tag: a.tag, desc: a.desc, titleStyle: { fontSize:'clamp(12.5px,1.2vh + 6px,15px)', fontWeight:700, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' },
+      style: {
+        display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px',
+        padding:'clamp(5px,1.1vh,11px) 14px', borderRadius:'10px', cursor:'pointer', flex:'none',
+        border: active===i ? '1px solid #d6483a' : '1px solid rgba(255,255,255,.08)',
+        background: active===i ? 'rgba(214,72,58,.12)' : 'rgba(255,255,255,.03)',
+        transition:'all .25s ease'
+      },
+      onEnter: ()=>this.handleEnter(i),
+      onLeave: ()=>this.handleLeave()
+    }));
+    return {
+      analyses,
+      boardContainerRef: this.boardContainerRef,
+      caption: active===null ? 'Najedź na analizę, aby zobaczyć pierwsze ruchy' : this.analysesData[active].title + ' — ' + this.analysesData[active].desc
+    };
+  }
+}
+</script>
+</body>
+</html>

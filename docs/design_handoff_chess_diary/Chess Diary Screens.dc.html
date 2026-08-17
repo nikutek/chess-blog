@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<style>body{margin:0}a{color:#d6483a}a:hover{color:#e06a5e}</style>
+</helmet>
+<div style="background:linear-gradient(160deg,#1a1a22 0%,#0d0d0e 50%,#1b1320 100%);color:#f5f4f2;font-family:system-ui,-apple-system,sans-serif;min-height:100vh;display:flex;flex-direction:column">
+
+  <div data-screen-label="Nav" style="display:flex;justify-content:space-between;align-items:center;padding:20px 56px;border-bottom:1px solid rgba(255,255,255,.08);flex:none">
+    <div style="display:flex;align-items:center;gap:40px">
+      <div style="font-size:17px;font-weight:700;letter-spacing:-0.3px;cursor:pointer">My Chess Journey</div>
+      <div style="display:flex;gap:26px;font-size:13.5px">
+        <span style="color:rgba(245,244,241,.65);cursor:pointer" style-hover="color:#f5f4f2">Home</span>
+        <span style="{{ navTournamentsStyle }}" onClick="{{ goTournaments }}">Tournaments</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <sc-if value="{{ isAuthor }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:13px;color:rgba(245,244,241,.65);border:1px solid rgba(255,255,255,.14);padding:8px 16px;border-radius:100px;cursor:pointer" style-hover="border-color:rgba(255,255,255,.3);color:#f5f4f2" onClick="{{ goNewTournament }}">New tournament</div>
+          <div style="font-size:13px;font-weight:600;background:#d6483a;color:#fff;padding:8px 16px;border-radius:100px;cursor:pointer" style-hover="background:#e05446" onClick="{{ goImportGame }}">Import game</div>
+          <div style="font-size:13px;color:rgba(245,244,241,.45);cursor:pointer;margin-left:6px" style-hover="color:#f5f4f2">Log out</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isReader }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:13px;color:rgba(245,244,241,.65);border:1px solid rgba(255,255,255,.14);padding:8px 16px;border-radius:100px;cursor:pointer" style-hover="border-color:rgba(255,255,255,.3);color:#f5f4f2" onClick="{{ goLogin }}">Log in</div>
+      </sc-if>
+    </div>
+  </div>
+
+  <sc-if value="{{ scLogin }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Login" style="flex:1;display:flex;align-items:center;justify-content:center;padding:48px">
+      <div style="width:360px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:36px">
+        <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px">Zaloguj się</div>
+        <div style="font-size:13px;color:rgba(245,244,241,.55);margin-bottom:26px">Panel autora My Chess Journey.</div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:rgba(245,244,241,.7);margin-bottom:6px">Email</div>
+            <div style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:10px 13px;font-size:14px;color:rgba(245,244,241,.4)">ty@przyklad.pl</div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:rgba(245,244,241,.7);margin-bottom:6px">Hasło</div>
+            <div style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:10px 13px;font-size:14px;color:rgba(245,244,241,.4)">••••••••</div>
+          </div>
+          <div style="font-size:12.5px;color:#e08079;display:none">Nieprawidłowy email lub hasło.</div>
+          <div style="background:#d6483a;color:#fff;text-align:center;font-size:14px;font-weight:700;padding:11px;border-radius:100px;cursor:pointer;margin-top:6px" style-hover="background:#e05446" onClick="{{ goTournaments }}">Zaloguj</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ scTournaments }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="Tournaments" style="flex:1;padding:44px 56px;max-width:980px;width:100%;margin:0 auto;box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:22px">
+        <div style="font-size:26px;font-weight:800;letter-spacing:-0.5px">Turnieje</div>
+        <div style="font-size:12.5px;color:rgba(245,244,241,.45)">3 turnieje</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:18px 22px;cursor:pointer" style-hover="border-color:#d6483a;background:rgba(214,72,58,.07)" onClick="{{ goGames }}">
+          <div>
+            <div style="font-size:16px;font-weight:700;margin-bottom:3px">Mistrzostwa Klubu 2026</div>
+            <div style="font-size:12.5px;color:rgba(245,244,241,.5)">Warszawa · KSz Polonia</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:22px">
+            <div style="font-size:12.5px;font-family:ui-monospace,monospace;color:rgba(245,244,241,.5)">14–16.03.2026</div>
+            <div style="color:rgba(245,244,241,.3);font-size:16px">→</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:18px 22px;cursor:pointer" style-hover="border-color:#d6483a;background:rgba(214,72,58,.07)" onClick="{{ goGames }}">
+          <div>
+            <div style="font-size:16px;font-weight:700;margin-bottom:3px">Otwarte MP Amatorów</div>
+            <div style="font-size:12.5px;color:rgba(245,244,241,.5)">Kraków · hala Wisły</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:22px">
+            <div style="font-size:12.5px;font-family:ui-monospace,monospace;color:rgba(245,244,241,.5)">02–04.05.2026</div>
+            <div style="color:rgba(245,244,241,.3);font-size:16px">→</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:18px 22px;cursor:pointer" style-hover="border-color:#d6483a;background:rgba(214,72,58,.07)" onClick="{{ goGames }}">
+          <div>
+            <div style="font-size:16px;font-weight:700;margin-bottom:3px">Liga Wojewódzka, runda jesienna</div>
+            <div style="font-size:12.5px;color:rgba(245,244,241,.5)">Łódź · MDK</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:22px">
+            <div style="font-size:12.5px;font-family:ui-monospace,monospace;color:rgba(245,244,241,.5)">10.10.2026</div>
+            <div style="color:rgba(245,244,241,.3);font-size:16px">→</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:28px;border:1px dashed rgba(255,255,255,.14);border-radius:12px;padding:26px;text-align:center;font-size:13px;color:rgba(245,244,241,.4)">Empty state: „No tournaments yet." — pojawia się zamiast listy, z przyciskiem „New tournament" dla autora.</div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ scNewTournament }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="New tournament" style="flex:1;padding:44px 56px;max-width:560px;width:100%;margin:0 auto;box-sizing:border-box">
+      <div style="font-size:12px;color:rgba(245,244,241,.45);margin-bottom:8px;cursor:pointer" onClick="{{ goTournaments }}">← Tournaments</div>
+      <div style="font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:26px">Nowy turniej</div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:rgba(245,244,241,.7);margin-bottom:6px">Nazwa</div>
+          <div style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:11px 13px;font-size:14px;color:rgba(245,244,241,.4)">np. Mistrzostwa Klubu 2026</div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:rgba(245,244,241,.7);margin-bottom:6px">Miejsce</div>
+          <div style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:11px 13px;font-size:14px;color:rgba(245,244,241,.4)">miasto, klub</div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:rgba(245,244,241,.7);margin-bottom:6px">Data</div>
+          <div style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:11px 13px;font-size:14px;color:rgba(245,244,241,.4)">RRRR-MM-DD</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <div style="background:#d6483a;color:#fff;font-size:14px;font-weight:700;padding:11px 26px;border-radius:100px;cursor:pointer" style-hover="background:#e05446" onClick="{{ goTournaments }}">Utwórz turniej</div>
+          <div style="font-size:14px;color:rgba(245,244,241,.55);padding:11px 18px;cursor:pointer" style-hover="color:#f5f4f2" onClick="{{ goTournaments }}">Anuluj</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ scGames }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Tournament games" style="flex:1;padding:44px 56px;max-width:980px;width:100%;margin:0 auto;box-sizing:border-box">
+      <div style="font-size:12px;color:rgba(245,244,241,.45);margin-bottom:8px;cursor:pointer" onClick="{{ goTournaments }}">← Tournaments</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:22px">
+        <div>
+          <div style="font-size:26px;font-weight:800;letter-spacing:-0.5px">Mistrzostwa Klubu 2026</div>
+          <div style="font-size:13px;color:rgba(245,244,241,.5);margin-top:4px">Warszawa · 14–16.03.2026</div>
+        </div>
+        <sc-if value="{{ isAuthor }}" hint-placeholder-val="{{ true }}">
+          <div style="font-size:13px;font-weight:600;background:#d6483a;color:#fff;padding:8px 16px;border-radius:100px;cursor:pointer" style-hover="background:#e05446" onClick="{{ goImportGame }}">Import game</div>
+        </sc-if>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 110px 130px 120px;gap:0;font-size:11.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(245,244,241,.4);padding:0 22px 10px">
+        <span>Opponent</span><span>Color</span><span>Date</span><span>Status</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:grid;grid-template-columns:1fr 110px 130px 120px;align-items:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:15px 22px;cursor:pointer" style-hover="border-color:#d6483a;background:rgba(214,72,58,.07)" onClick="{{ goGame }}">
+          <span style="font-size:15px;font-weight:700">vs Adam Kowalski</span>
+          <span style="font-size:13px;color:rgba(245,244,241,.65)">⚪ Białe</span>
+          <span style="font-size:12.5px;font-family:ui-monospace,monospace;color:rgba(245,244,241,.5)">14.03.2026</span>
+          <span><span style="font-size:11px;font-weight:700;letter-spacing:0.5px;background:rgba(120,200,120,.12);color:#8fd694;border:1px solid rgba(143,214,148,.3);padding:3px 10px;border-radius:100px">Published</span></span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 110px 130px 120px;align-items:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:15px 22px;cursor:pointer" style-hover="border-color:#d6483a;background:rgba(214,72,58,.07)" onClick="{{ goGame }}">
+          <span style="font-size:15px;font-weight:700">vs Maria Nowak</span>
+          <span style="font-size:13px;color:rgba(245,244,241,.65)">⚫ Czarne</span>
+          <span style="font-size:12.5px;font-family:ui-monospace,monospace;color:rgba(245,244,241,.5)">15.03.2026</span>
+          <span><span style="font-size:11px;font-weight:700;letter-spacing:0.5px;background:rgba(120,200,120,.12);color:#8fd694;border:1px solid rgba(143,214,148,.3);padding:3px 10px;border-radius:100px">Published</span></span>
+        </div>
+        <sc-if value="{{ isAuthor }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:1fr 110px 130px 120px;align-items:center;background:rgba(255,255,255,.03);border:1px dashed rgba(214,72,58,.4);border-radius:12px;padding:15px 22px;cursor:pointer" style-hover="border-color:#d6483a;background:rgba(214,72,58,.07)" onClick="{{ goGame }}">
+            <span style="font-size:15px;font-weight:700">vs Piotr Zieliński</span>
+            <span style="font-size:13px;color:rgba(245,244,241,.65)">⚪ Białe</span>
+            <span style="font-size:12.5px;font-family:ui-monospace,monospace;color:rgba(245,244,241,.5)">16.03.2026</span>
+            <span><span style="font-size:11px;font-weight:700;letter-spacing:0.5px;background:rgba(214,72,58,.14);color:#e08079;border:1px solid rgba(224,128,121,.35);padding:3px 10px;border-radius:100px">Draft</span></span>
+          </div>
+        </sc-if>
+      </div>
+      <sc-if value="{{ isReader }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:16px;font-size:12.5px;color:rgba(245,244,241,.4)">Czytelnicy widzą tylko partie Published.</div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ scImportGame }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Import game" style="flex:1;padding:44px 56px;max-width:640px;width:100%;margin:0 auto;box-sizing:border-box">
+      <div style="font-size:12px;color:rgba(245,244,241,.45);margin-bottom:8px;cursor:pointer" onClick="{{ goGames }}">← Mistrzostwa Klubu 2026</div>
+      <div style="font-size:26px;font-weight:800;letter-spacing:-0.5px;margin-bottom:26px">Import partii (PGN)</div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:rgba(245,244,241,.7);margin-bottom:6px">Turniej</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:11px 13px;font-size:14px">
+            <span>Mistrzostwa Klubu 2026</span><span style="color:rgba(245,244,241,.4);font-size:12px">▾</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:rgba(245,244,241,.7);margin-bottom:6px">PGN</div>
+          <div style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:13px;font-size:12.5px;font-family:ui-monospace,monospace;color:rgba(245,244,241,.45);line-height:1.7;min-height:130px">[Event "Mistrzostwa Klubu 2026"]<br>[White "Jan Autor"] [Black "Adam Kowalski"]<br><br>1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 ...</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <div style="background:#d6483a;color:#fff;font-size:14px;font-weight:700;padding:11px 26px;border-radius:100px;cursor:pointer" style-hover="background:#e05446" onClick="{{ goGame }}">Importuj</div>
+          <div style="font-size:14px;color:rgba(245,244,241,.55);padding:11px 18px;cursor:pointer" style-hover="color:#f5f4f2" onClick="{{ goGames }}">Anuluj</div>
+        </div>
+        <div style="font-size:12.5px;color:rgba(245,244,241,.4)">Partia trafia jako Draft — opublikujesz ją z widoku gry.</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ scGame }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Game view" style="flex:1;padding:36px 56px;max-width:1180px;width:100%;margin:0 auto;box-sizing:border-box">
+      <div style="font-size:12px;color:rgba(245,244,241,.45);margin-bottom:8px;cursor:pointer" onClick="{{ goGames }}">← Mistrzostwa Klubu 2026</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:14px">
+        <div>
+          <div style="font-size:26px;font-weight:800;letter-spacing:-0.5px">vs Adam Kowalski</div>
+          <div style="font-size:13px;color:rgba(245,244,241,.5);margin-top:4px">⚪ Białe · 14.03.2026 · runda 1</div>
+        </div>
+        <sc-if value="{{ isAuthor }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);border-radius:100px;padding:6px 8px 6px 16px">
+            <span style="font-size:12.5px;color:rgba(245,244,241,.6)">Status</span>
+            <div style="display:flex;background:rgba(0,0,0,.3);border-radius:100px;padding:3px">
+              <span style="{{ draftChipStyle }}" onClick="{{ setDraft }}">Draft</span>
+              <span style="{{ publishedChipStyle }}" onClick="{{ setPublished }}">Published</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:start">
+        <div>
+          <div style="display:grid;grid-template-columns:repeat(8,1fr);border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;aspect-ratio:1">
+            <sc-for list="{{ squares }}" as="sq" hint-placeholder-count="8">
+              <div style="{{ sq.style }}">{{ sq.piece }}</div>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:center;gap:8px;margin-top:14px">
+            <div style="border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 14px;font-size:13px;color:rgba(245,244,241,.7);cursor:pointer" style-hover="border-color:rgba(255,255,255,.3)">⏮</div>
+            <div style="border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 14px;font-size:13px;color:rgba(245,244,241,.7);cursor:pointer" style-hover="border-color:rgba(255,255,255,.3)">◀</div>
+            <div style="border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 14px;font-size:13px;color:rgba(245,244,241,.7);cursor:pointer" style-hover="border-color:rgba(255,255,255,.3)">▶</div>
+            <div style="border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 14px;font-size:13px;color:rgba(245,244,241,.7);cursor:pointer" style-hover="border-color:rgba(255,255,255,.3)">⏭</div>
+          </div>
+        </div>
+
+        <div style="min-width:0">
+          <div style="font-size:11.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,244,241,.45);margin-bottom:12px">Główna linia</div>
+          <div style="display:flex;flex-direction:column;gap:2px;font-size:14px">
+            <div style="display:flex;gap:10px;padding:6px 10px;border-radius:7px" style-hover="background:rgba(255,255,255,.05)">
+              <span style="color:rgba(245,244,241,.4);font-family:ui-monospace,monospace;width:26px;flex:none">1.</span>
+              <span style="font-weight:600;cursor:pointer">e4</span><span style="cursor:pointer">e5</span>
+            </div>
+            <div style="display:flex;gap:10px;padding:6px 10px;border-radius:7px" style-hover="background:rgba(255,255,255,.05)">
+              <span style="color:rgba(245,244,241,.4);font-family:ui-monospace,monospace;width:26px;flex:none">2.</span>
+              <span style="font-weight:600;cursor:pointer">Nf3</span><span style="cursor:pointer">Nc6</span>
+            </div>
+            <div style="display:flex;gap:10px;padding:6px 10px;border-radius:7px;background:rgba(214,72,58,.14);border:1px solid rgba(214,72,58,.35)">
+              <span style="color:rgba(245,244,241,.4);font-family:ui-monospace,monospace;width:26px;flex:none">3.</span>
+              <span style="font-weight:700;cursor:pointer;color:#e08079">Bc4</span><span style="cursor:pointer">Bc5</span>
+            </div>
+            <div style="margin:6px 0 6px 36px;padding:12px 14px;background:rgba(255,255,255,.04);border-left:2px solid #d6483a;border-radius:0 9px 9px 0;font-size:13px;line-height:1.6;color:rgba(245,244,241,.75)">
+              Klasyczna Włoska. Wybrałem Bc4 zamiast Bb5, bo przeciwnik dobrze zna Hiszpańską — chciałem zejść z jego przygotowania.
+              <sc-if value="{{ isAuthor }}" hint-placeholder-val="{{ true }}">
+                <span style="display:inline-block;margin-left:8px;font-size:11.5px;color:#d6483a;cursor:pointer" style-hover="color:#e06a5e">Edytuj</span>
+              </sc-if>
+            </div>
+            <div style="margin:2px 0 8px 36px;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 14px;background:rgba(0,0,0,.2)">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(245,244,241,.45)">Sideline · po 3.Bc4</span>
+                <span style="font-size:11.5px;color:rgba(245,244,241,.4);cursor:pointer" style-hover="color:#f5f4f2">Otwórz na szachownicy →</span>
+              </div>
+              <div style="font-size:13.5px;line-height:1.7"><span style="font-weight:600">3...Nf6 4.d3 Bc5 5.O-O d6</span> <span style="color:rgba(245,244,241,.55)">— spokojniejsza struktura Giuoco Pianissimo.</span></div>
+              <div style="margin:8px 0 0 14px;border-left:2px solid rgba(214,72,58,.5);padding:8px 12px;background:rgba(255,255,255,.03);border-radius:0 8px 8px 0">
+                <div style="font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(245,244,241,.4);margin-bottom:5px">Zagnieżdżony sideline · po 4.d3</div>
+                <div style="font-size:13px;line-height:1.6"><span style="font-weight:600">4...d5!?</span> <span style="color:rgba(245,244,241,.55)">— ostre uderzenie w centrum, wymaga dokładności.</span></div>
+              </div>
+              <sc-if value="{{ isAuthor }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;gap:14px;margin-top:10px;font-size:11.5px">
+                  <span style="color:#d6483a;cursor:pointer" style-hover="color:#e06a5e">+ Dodaj zagnieżdżony wariant</span>
+                  <span style="color:rgba(245,244,241,.4);cursor:pointer" style-hover="color:#e08079">Usuń sideline</span>
+                </div>
+              </sc-if>
+            </div>
+            <div style="display:flex;gap:10px;padding:6px 10px;border-radius:7px" style-hover="background:rgba(255,255,255,.05)">
+              <span style="color:rgba(245,244,241,.4);font-family:ui-monospace,monospace;width:26px;flex:none">4.</span>
+              <span style="font-weight:600;cursor:pointer">c3</span><span style="cursor:pointer">Nf6</span>
+            </div>
+            <div style="display:flex;gap:10px;padding:6px 10px;border-radius:7px" style-hover="background:rgba(255,255,255,.05)">
+              <span style="color:rgba(245,244,241,.4);font-family:ui-monospace,monospace;width:26px;flex:none">5.</span>
+              <span style="font-weight:600;cursor:pointer">d4</span><span style="cursor:pointer">exd4</span>
+            </div>
+            <sc-if value="{{ isAuthor }}" hint-placeholder-val="{{ true }}">
+              <div style="margin:8px 0 0 36px">
+                <div style="border:1px dashed rgba(255,255,255,.18);border-radius:9px;padding:10px 14px;font-size:12.5px;color:rgba(245,244,241,.45);cursor:pointer" style-hover="border-color:#d6483a;color:#e08079">+ Dodaj adnotację do 5.d4</div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 56px;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:rgba(245,244,241,.4);flex:none">
+    <span>© 2026 My Chess Journey</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:11px;letter-spacing:1px;text-transform:uppercase">Podgląd jako</span>
+      <div style="display:flex;background:rgba(255,255,255,.06);border-radius:100px;padding:3px">
+        <span style="{{ roleAuthorStyle }}" onClick="{{ setAuthor }}">Autor</span>
+        <span style="{{ roleReaderStyle }}" onClick="{{ setReader }}">Czytelnik</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { screen:'tournaments', role:'author', status:'draft' };
+  renderVals(){
+    const s = this.state;
+    const go = scr => () => this.setState({ screen:scr });
+    const chip = on => ({
+      fontSize:'11.5px', fontWeight:700, padding:'4px 12px', borderRadius:'100px', cursor:'pointer',
+      background: on ? '#d6483a' : 'transparent', color: on ? '#fff' : 'rgba(245,244,241,.55)'
+    });
+    // board: Italian game after 5...exd4
+    const rows = [
+      'r.bqk..r','pppp.ppp','..n..n..','..b.....','..BPP...','.....N..','PP...PPP','RNBQ.RK.'
+    ];
+    const glyphs = { k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟',K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙' };
+    const squares = [];
+    for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+      const ch = rows[r][c];
+      const light = (r+c)%2===0;
+      const isLast = r===4 && c===3; // d4 pawn
+      squares.push({
+        piece: glyphs[ch] || '',
+        style: {
+          background: isLast ? 'rgba(214,72,58,.55)' : (light ? '#e9e4d8' : '#3a3a3e'),
+          display:'flex', alignItems:'center', justifyContent:'center', aspectRatio:'1',
+          fontSize:'clamp(18px,3.2vw,34px)', lineHeight:1, userSelect:'none',
+          color: ch === '.' ? 'transparent' : (ch === ch.toUpperCase() ? '#fdfcf9' : '#17171a'),
+          textShadow: ch === '.' ? 'none' : (ch === ch.toUpperCase() ? '0 1px 2px rgba(0,0,0,.55)' : '0 1px 1px rgba(255,255,255,.12)')
+        }
+      });
+    }
+    return {
+      scLogin: s.screen==='login', scTournaments: s.screen==='tournaments',
+      scNewTournament: s.screen==='newTournament', scGames: s.screen==='games',
+      scImportGame: s.screen==='importGame', scGame: s.screen==='game',
+      isAuthor: s.role==='author', isReader: s.role==='reader',
+      goLogin: go('login'), goTournaments: go('tournaments'), goNewTournament: go('newTournament'),
+      goGames: go('games'), goImportGame: go('importGame'), goGame: go('game'),
+      setAuthor: () => this.setState({ role:'author' }),
+      setReader: () => this.setState({ role:'reader', screen: ['newTournament','importGame'].includes(s.screen) ? 'tournaments' : s.screen }),
+      roleAuthorStyle: chip(s.role==='author'), roleReaderStyle: chip(s.role==='reader'),
+      setDraft: () => this.setState({ status:'draft' }), setPublished: () => this.setState({ status:'published' }),
+      draftChipStyle: chip(s.status==='draft'), publishedChipStyle: chip(s.status==='published'),
+      navTournamentsStyle: {
+        color: ['tournaments','games','newTournament'].includes(s.screen) ? '#f5f4f2' : 'rgba(245,244,241,.65)',
+        fontWeight: 600, cursor:'pointer'
+      },
+      squares
+    };
+  }
+}
+</script>
+</body>
+</html>
