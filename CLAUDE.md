@@ -41,3 +41,17 @@ Przy budowie frontu: używaj komponentów shadcn/ui zamiast pisać własne od ze
 - `MEMORY.md` — indeks ADRów i CONTEXT.md
 
 Przed implementacją nowej funkcji: sprawdź ADRy pod kątem decyzji które jej dotyczą.
+
+## Agent skills
+
+### Issue tracker
+
+Issues i PRD-y żyją jako GitHub issues w `nikutek/chess-blog`. Zob. `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Domyślny słownik pięciu ról triage (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). Zob. `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: jeden `CONTEXT.md` + `docs/adr/` w root repo. Zob. `docs/agents/domain.md`.
