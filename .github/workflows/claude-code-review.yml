@@ -36,6 +36,12 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # PRs in this workflow are opened by the claude[bot] actor itself
+          # (issue -> @claude -> PR). Without this, the review run refuses to
+          # start with "Workflow initiated by non-human actor". Scoped to the
+          # one bot we actually use, not '*', since allowed_bots skips the
+          # repo-permission check.
+          allowed_bots: 'claude'
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
