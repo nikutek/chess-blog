@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import {
+  createGame as createGameRecord,
+  publishGame as publishGameRecord,
+  unpublishGame as unpublishGameRecord,
+  type Color,
+} from "@/lib/games";
 import { getAccessToken } from "@/lib/supabase/server";
 
 export type GameState = { error: string } | undefined;
@@ -41,26 +47,14 @@ export async function createGame(
     return;
   }
 
-  const response = await fetch(`${process.env.API_URL}/api/games`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({
-      tournamentId: Number(tournamentId),
-      pgn,
-      color,
-      opponent,
-      date,
-    }),
-  });
-
-  if (!response.ok) {
+  let game;
+  try {
+    game = await createGameRecord(Number(tournamentId), pgn, color as Color, opponent, date);
+  } catch {
     return { error: "Could not import the game. Check the PGN and try again." };
   }
 
-  redirect(`/tournaments/${tournamentId}/games`);
+  redirect(`/tournaments/${game.tournamentId}/games`);
 }
 
 async function setPublicationStatus(
@@ -77,12 +71,13 @@ async function setPublicationStatus(
     redirect("/login");
   }
 
-  const response = await fetch(`${process.env.API_URL}/api/games/${gameId}/${action}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (!response.ok) {
+  try {
+    if (action === "publish") {
+      await publishGameRecord(Number(gameId));
+    } else {
+      await unpublishGameRecord(Number(gameId));
+    }
+  } catch {
     return { error: `Could not ${action} the game.` };
   }
 

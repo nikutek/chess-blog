@@ -8,34 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getAccessToken } from "@/lib/supabase/server";
-
-type Game = {
-  id: number;
-  pgn: string;
-  color: "WHITE" | "BLACK";
-  status: "DRAFT" | "PUBLISHED";
-  opponent: string;
-  date: string;
-};
-
-async function getGames(tournamentId: string): Promise<Game[]> {
-  // No token means an anonymous reader: the backend already filters out
-  // Draft games for unauthenticated requests (see GameController), so no
-  // client-side filtering is needed here.
-  const accessToken = await getAccessToken();
-
-  const response = await fetch(`${process.env.API_URL}/api/tournaments/${tournamentId}/games`, {
-    cache: "no-store",
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-  });
-
-  if (!response.ok) {
-    throw new Error("Could not load games.");
-  }
-
-  return response.json();
-}
+import { listGamesByTournament } from "@/lib/games";
 
 export default async function TournamentGamesPage({
   params,
@@ -43,7 +16,9 @@ export default async function TournamentGamesPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const games = await getGames(id);
+  // Draft games are filtered by Postgres RLS based on the caller's session,
+  // not here: an anonymous reader's query only ever returns Published rows.
+  const games = await listGamesByTournament(Number(id));
 
   return (
     <div className="flex min-h-screen flex-col items-center gap-6 p-4 pt-16">

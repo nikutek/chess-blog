@@ -1,14 +1,8 @@
+import { getGame } from "@/lib/games";
 import { getAccessToken } from "@/lib/supabase/server";
 
 import { GameViewer } from "./game-viewer";
 import { PublishToggle } from "./publish-toggle";
-
-type Game = {
-  id: number;
-  pgn: string;
-  opponent: string;
-  status: "DRAFT" | "PUBLISHED";
-};
 
 type Annotation = {
   id: number;
@@ -24,19 +18,6 @@ type Sideline = {
   description: string | null;
   parentSidelineId: number | null;
 };
-
-async function getGame(id: string, accessToken: string | undefined): Promise<Game> {
-  const response = await fetch(`${process.env.API_URL}/api/games/${id}`, {
-    cache: "no-store",
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-  });
-
-  if (!response.ok) {
-    throw new Error("Could not load the game.");
-  }
-
-  return response.json();
-}
 
 async function getAnnotations(id: string): Promise<Annotation[]> {
   const response = await fetch(`${process.env.API_URL}/api/games/${id}/annotations`, {
@@ -70,7 +51,7 @@ export default async function GamePage({
   const { id } = await params;
   const accessToken = await getAccessToken();
   const [game, annotations, sidelines] = await Promise.all([
-    getGame(id, accessToken),
+    getGame(Number(id)),
     getAnnotations(id),
     getSidelines(id),
   ]);

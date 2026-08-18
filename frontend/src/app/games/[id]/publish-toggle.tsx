@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 import { publishGame, unpublishGame } from "../actions";
 
-type Status = "DRAFT" | "PUBLISHED";
+type Status = "draft" | "published";
 
 export function PublishToggle({
   gameId,
@@ -16,7 +16,7 @@ export function PublishToggle({
   status: Status;
 }) {
   const [state, action, pending] = useActionState(
-    status === "DRAFT" ? publishGame : unpublishGame,
+    status === "draft" ? publishGame : unpublishGame,
     undefined,
   );
 
@@ -24,7 +24,7 @@ export function PublishToggle({
     <form action={action} className="flex flex-col items-center gap-2">
       <input type="hidden" name="gameId" value={gameId} />
       <Button type="submit" variant="outline" disabled={pending}>
-        {status === "DRAFT" ? "Publish" : "Unpublish"}
+        {status === "draft" ? "Publish" : "Unpublish"}
       </Button>
       {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
     </form>

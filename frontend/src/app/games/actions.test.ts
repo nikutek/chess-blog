@@ -3,16 +3,32 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const getAccessToken = vi.fn();
 const redirect = vi.fn();
 const fetchMock = vi.fn();
+const createGameRecord = vi.fn();
+const publishGameRecord = vi.fn();
+const unpublishGameRecord = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({ getAccessToken }));
 vi.mock("next/navigation", () => ({ redirect }));
+vi.mock("@/lib/games", () => ({
+  createGame: createGameRecord,
+  publishGame: publishGameRecord,
+  unpublishGame: unpublishGameRecord,
+}));
 vi.stubGlobal("fetch", fetchMock);
 
 const revalidatePath = vi.fn();
 
 vi.mock("next/cache", () => ({ revalidatePath }));
 
-const { createGame, saveAnnotation, deleteAnnotation, saveSideline, deleteSideline } = await import("./actions");
+const {
+  createGame,
+  publishGame,
+  unpublishGame,
+  saveAnnotation,
+  deleteAnnotation,
+  saveSideline,
+  deleteSideline,
+} = await import("./actions");
 
 function formData(fields: Record<string, string>) {
   const fd = new FormData();
@@ -25,7 +41,7 @@ function formData(fields: Record<string, string>) {
 const validFields = {
   tournamentId: "1",
   pgn: "1. e4 e5 2. Nf3 Nc6",
-  color: "WHITE",
+  color: "white",
   opponent: "Kasparov",
   date: "2026-08-02",
 };
@@ -35,17 +51,20 @@ beforeEach(() => {
   redirect.mockReset();
   fetchMock.mockReset();
   revalidatePath.mockReset();
+  createGameRecord.mockReset();
+  publishGameRecord.mockReset();
+  unpublishGameRecord.mockReset();
 });
 
 describe("createGame", () => {
-  it("rejects empty fields without calling the backend", async () => {
+  it("rejects empty fields without calling Supabase", async () => {
     const result = await createGame(
       undefined,
       formData({ tournamentId: "", pgn: "", color: "", opponent: "", date: "" }),
     );
 
     expect(result?.error).toBeTruthy();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(createGameRecord).not.toHaveBeenCalled();
   });
 
   it("redirects to /login when there is no access token", async () => {
@@ -54,40 +73,79 @@ describe("createGame", () => {
     await createGame(undefined, formData(validFields));
 
     expect(redirect).toHaveBeenCalledWith("/login");
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(createGameRecord).not.toHaveBeenCalled();
   });
 
-  it("posts to the backend with a bearer token and redirects to the tournament's game list", async () => {
+  it("creates the game and redirects to the tournament's game list", async () => {
     getAccessToken.mockResolvedValue("test-access-token");
-    fetchMock.mockResolvedValue(new Response(null, { status: 201 }));
+    createGameRecord.mockResolvedValue({ id: 1, tournamentId: 1 });
 
     await createGame(undefined, formData(validFields));
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/games"),
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({ Authorization: "Bearer test-access-token" }),
-        body: JSON.stringify({
-          tournamentId: 1,
-          pgn: "1. e4 e5 2. Nf3 Nc6",
-          color: "WHITE",
-          opponent: "Kasparov",
-          date: "2026-08-02",
-        }),
-      }),
+    expect(createGameRecord).toHaveBeenCalledWith(
+      1,
+      "1. e4 e5 2. Nf3 Nc6",
+      "white",
+      "Kasparov",
+      "2026-08-02",
     );
     expect(redirect).toHaveBeenCalledWith("/tournaments/1/games");
   });
 
-  it("returns an error message when the backend rejects the request", async () => {
+  it("returns an error message when Supabase rejects the request", async () => {
     getAccessToken.mockResolvedValue("test-access-token");
-    fetchMock.mockResolvedValue(new Response(null, { status: 400 }));
+    createGameRecord.mockRejectedValue(new Error("Could not import the game."));
 
     const result = await createGame(undefined, formData(validFields));
 
     expect(result?.error).toBeTruthy();
     expect(redirect).not.toHaveBeenCalled();
+  });
+});
+
+describe("publishGame", () => {
+  it("publishes the game and revalidates the game page", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    publishGameRecord.mockResolvedValue({ id: 1, status: "published" });
+
+    const result = await publishGame(undefined, formData({ gameId: "1" }));
+
+    expect(publishGameRecord).toHaveBeenCalledWith(1);
+    expect(revalidatePath).toHaveBeenCalledWith("/games/1");
+    expect(result).toBeUndefined();
+  });
+
+  it("returns an error message when Supabase rejects the request", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    publishGameRecord.mockRejectedValue(new Error("boom"));
+
+    const result = await publishGame(undefined, formData({ gameId: "1" }));
+
+    expect(result?.error).toBeTruthy();
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe("unpublishGame", () => {
+  it("unpublishes the game and revalidates the game page", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    unpublishGameRecord.mockResolvedValue({ id: 1, status: "draft" });
+
+    const result = await unpublishGame(undefined, formData({ gameId: "1" }));
+
+    expect(unpublishGameRecord).toHaveBeenCalledWith(1);
+    expect(revalidatePath).toHaveBeenCalledWith("/games/1");
+    expect(result).toBeUndefined();
+  });
+
+  it("returns an error message when Supabase rejects the request", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    unpublishGameRecord.mockRejectedValue(new Error("boom"));
+
+    const result = await unpublishGame(undefined, formData({ gameId: "1" }));
+
+    expect(result?.error).toBeTruthy();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });
 
