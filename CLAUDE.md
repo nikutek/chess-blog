@@ -26,11 +26,10 @@ Gdy podczas budowy pojawi się okazja do użycia czegoś ciekawego spoza wylisto
 
 ## Stack technologiczny
 
-**Frontend**: Next.js, Tailwind CSS, shadcn/ui  
-**Backend**: Spring Boot  
+**Frontend**: Next.js (Server Actions jako backend), Tailwind CSS, shadcn/ui  
 **Auth**: Supabase (JWT)  
-**DB**: Supabase (Postgres)  
-**Deploy**: Vercel (frontend) + Railway (backend)
+**DB**: Supabase (Postgres, autoryzacja przez RLS)  
+**Deploy**: Vercel
 
 Przy budowie frontu: używaj komponentów shadcn/ui zamiast pisać własne od zera. Stylowanie przez Tailwind, bez osobnych plików CSS.
 
