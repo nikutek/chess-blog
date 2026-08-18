@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getAccessToken = vi.fn();
 const redirect = vi.fn();
-const fetchMock = vi.fn();
+const insertTournament = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({ getAccessToken }));
 vi.mock("next/navigation", () => ({ redirect }));
-vi.stubGlobal("fetch", fetchMock);
+vi.mock("@/lib/tournaments", () => ({ createTournament: insertTournament }));
 
 const { createTournament } = await import("./actions");
 
@@ -23,15 +23,15 @@ const validFields = { name: "City Open", location: "Warsaw", date: "2026-08-01" 
 beforeEach(() => {
   getAccessToken.mockReset();
   redirect.mockReset();
-  fetchMock.mockReset();
+  insertTournament.mockReset();
 });
 
 describe("createTournament", () => {
-  it("rejects empty fields without calling the backend", async () => {
+  it("rejects empty fields without calling Supabase", async () => {
     const result = await createTournament(undefined, formData({ name: "", location: "", date: "" }));
 
     expect(result?.error).toBeTruthy();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(insertTournament).not.toHaveBeenCalled();
   });
 
   it("redirects to /login when there is no access token", async () => {
@@ -40,28 +40,22 @@ describe("createTournament", () => {
     await createTournament(undefined, formData(validFields));
 
     expect(redirect).toHaveBeenCalledWith("/login");
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(insertTournament).not.toHaveBeenCalled();
   });
 
-  it("posts to the backend with a bearer token and redirects on success", async () => {
+  it("creates the tournament and redirects on success", async () => {
     getAccessToken.mockResolvedValue("test-access-token");
-    fetchMock.mockResolvedValue(new Response(null, { status: 201 }));
+    insertTournament.mockResolvedValue({ id: 1, ...validFields });
 
     await createTournament(undefined, formData(validFields));
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/tournaments"),
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({ Authorization: "Bearer test-access-token" }),
-      }),
-    );
+    expect(insertTournament).toHaveBeenCalledWith("City Open", "Warsaw", "2026-08-01");
     expect(redirect).toHaveBeenCalledWith("/tournaments");
   });
 
-  it("returns an error message when the backend rejects the request", async () => {
+  it("returns an error message when Supabase rejects the insert", async () => {
     getAccessToken.mockResolvedValue("test-access-token");
-    fetchMock.mockResolvedValue(new Response(null, { status: 400 }));
+    insertTournament.mockRejectedValue(new Error("Could not create the tournament."));
 
     const result = await createTournament(undefined, formData(validFields));
 

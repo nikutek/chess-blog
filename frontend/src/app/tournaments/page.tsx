@@ -6,28 +6,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-type Tournament = {
-  id: number;
-  name: string;
-  location: string;
-  date: string;
-};
-
-async function getTournaments(): Promise<Tournament[]> {
-  const response = await fetch(`${process.env.API_URL}/api/tournaments`, {
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error("Could not load tournaments.");
-  }
-
-  return response.json();
-}
+import { listTournaments } from "@/lib/tournaments";
 
 export default async function TournamentsPage() {
-  const tournaments = await getTournaments();
+  const tournaments = await listTournaments();
 
   return (
     <div className="flex min-h-screen flex-col items-center gap-6 p-4 pt-16">

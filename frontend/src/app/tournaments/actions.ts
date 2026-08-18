@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { getAccessToken } from "@/lib/supabase/server";
+import { createTournament as insertTournament } from "@/lib/tournaments";
 
 export type TournamentState = { error: string } | undefined;
 
@@ -34,16 +35,9 @@ export async function createTournament(
     return;
   }
 
-  const response = await fetch(`${process.env.API_URL}/api/tournaments`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ name, location, date }),
-  });
-
-  if (!response.ok) {
+  try {
+    await insertTournament(name, location, date);
+  } catch {
     return { error: "Could not create the tournament." };
   }
 
