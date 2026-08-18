@@ -46,5 +46,8 @@ jobs:
           # Optional: Add claude_args to customize behavior and configuration
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
-          # claude_args: '--allowed-tools Bash(gh pr *)'
+          # Grants: installing deps, running the frontend's test/lint/build scripts
+          # (TDD per CLAUDE.md needs this to self-verify before opening a PR), and
+          # opening the PR itself via gh, instead of leaving a "Create PR" link.
+          claude_args: '--allowed-tools "Bash(npm install:*),Bash(npm ci:*),Bash(npm test:*),Bash(npm run lint:*),Bash(npm run build:*),Bash(npx vitest:*),Bash(gh pr create:*),Bash(gh pr edit:*)"'
 
