@@ -50,13 +50,13 @@ export function GameForm({ tournaments }: { tournaments: Tournament[] }) {
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="color">Color</Label>
-        <Select name="color" defaultValue="WHITE">
+        <Select name="color" defaultValue="white">
           <SelectTrigger id="color" className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="WHITE">White</SelectItem>
-            <SelectItem value="BLACK">Black</SelectItem>
+            <SelectItem value="white">White</SelectItem>
+            <SelectItem value="black">Black</SelectItem>
           </SelectContent>
         </Select>
       </div>

@@ -1,20 +1,10 @@
+import { listRecentPublishedGames } from "@/lib/games";
+
 import { HomeHero } from "./home-hero";
-import { toRecentAnalyses, type Game } from "./recent-analyses";
-
-async function getRecentGames(): Promise<Game[]> {
-  const response = await fetch(`${process.env.API_URL}/api/games?limit=4`, {
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error("Could not load recent games.");
-  }
-
-  return response.json();
-}
+import { toRecentAnalyses } from "./recent-analyses";
 
 export default async function Home() {
-  const games = await getRecentGames();
+  const games = await listRecentPublishedGames(4);
   const analyses = toRecentAnalyses(games);
 
   return (
