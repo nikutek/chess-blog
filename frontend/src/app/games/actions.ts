@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  createAnnotation,
+  deleteAnnotation as deleteAnnotationRecord,
+  updateAnnotationText,
+} from "@/lib/annotations";
+import {
   createGame as createGameRecord,
   publishGame as publishGameRecord,
   unpublishGame as unpublishGameRecord,
@@ -105,7 +110,6 @@ export async function saveAnnotation(
   const gameId = formData.get("gameId");
   const fen = formData.get("fen");
   const annotationId = formData.get("annotationId");
-  const sidelineId = formData.get("sidelineId");
   const text = formData.get("text");
 
   if (
@@ -126,23 +130,14 @@ export async function saveAnnotation(
   }
 
   const isUpdate = typeof annotationId === "string" && annotationId !== "";
-  const url = isUpdate
-    ? `${process.env.API_URL}/api/games/${gameId}/annotations/${annotationId}`
-    : `${process.env.API_URL}/api/games/${gameId}/annotations`;
-  const hasSidelineId = typeof sidelineId === "string" && sidelineId !== "";
 
-  const response = await fetch(url, {
-    method: isUpdate ? "PUT" : "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(
-      isUpdate ? { text } : { fen, text, ...(hasSidelineId ? { sidelineId: Number(sidelineId) } : {}) },
-    ),
-  });
-
-  if (!response.ok) {
+  try {
+    if (isUpdate) {
+      await updateAnnotationText(Number(annotationId), text);
+    } else {
+      await createAnnotation(Number(gameId), fen, text);
+    }
+  } catch {
     return { error: "Could not save the annotation." };
   }
 
@@ -250,12 +245,9 @@ export async function deleteAnnotation(
     return;
   }
 
-  const response = await fetch(`${process.env.API_URL}/api/games/${gameId}/annotations/${annotationId}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (!response.ok) {
+  try {
+    await deleteAnnotationRecord(Number(annotationId));
+  } catch {
     return { error: "Could not delete the annotation." };
   }
 
