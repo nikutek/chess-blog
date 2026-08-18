@@ -20,7 +20,7 @@ Single-context repo (this repo):
 ├── docs/adr/
 │   ├── 0001-fen-as-annotation-identifier.md
 │   └── 0002-supabase-auth-jwt.md
-└── frontend/, backend/
+└── frontend/
 ```
 
 ## Use the glossary's vocabulary
