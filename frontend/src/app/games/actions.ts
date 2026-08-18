@@ -14,6 +14,11 @@ import {
   unpublishGame as unpublishGameRecord,
   type Color,
 } from "@/lib/games";
+import {
+  createSideline as createSidelineRecord,
+  deleteSideline as deleteSidelineRecord,
+  updateSideline as updateSidelineRecord,
+} from "@/lib/sidelines";
 import { getAccessToken } from "@/lib/supabase/server";
 
 export type GameState = { error: string } | undefined;
@@ -111,6 +116,7 @@ export async function saveAnnotation(
   const fen = formData.get("fen");
   const annotationId = formData.get("annotationId");
   const text = formData.get("text");
+  const sidelineId = formData.get("sidelineId");
 
   if (
     typeof gameId !== "string" ||
@@ -130,12 +136,18 @@ export async function saveAnnotation(
   }
 
   const isUpdate = typeof annotationId === "string" && annotationId !== "";
+  const hasSidelineId = typeof sidelineId === "string" && sidelineId !== "";
 
   try {
     if (isUpdate) {
       await updateAnnotationText(Number(annotationId), text);
     } else {
-      await createAnnotation(Number(gameId), fen, text);
+      await createAnnotation(
+        Number(gameId),
+        fen,
+        text,
+        hasSidelineId ? Number(sidelineId) : undefined,
+      );
     }
   } catch {
     return { error: "Could not save the annotation." };
@@ -174,25 +186,21 @@ export async function saveSideline(
   }
 
   const isUpdate = typeof sidelineId === "string" && sidelineId !== "";
-  const url = isUpdate
-    ? `${process.env.API_URL}/api/games/${gameId}/sidelines/${sidelineId}`
-    : `${process.env.API_URL}/api/games/${gameId}/sidelines`;
   const hasParentSidelineId = typeof parentSidelineId === "string" && parentSidelineId !== "";
 
-  const response = await fetch(url, {
-    method: isUpdate ? "PUT" : "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(
-      isUpdate
-        ? { pgn, description }
-        : { branchFen, pgn, description, ...(hasParentSidelineId ? { parentSidelineId: Number(parentSidelineId) } : {}) },
-    ),
-  });
-
-  if (!response.ok) {
+  try {
+    if (isUpdate) {
+      await updateSidelineRecord(Number(sidelineId), pgn, description);
+    } else {
+      await createSidelineRecord(
+        Number(gameId),
+        hasParentSidelineId ? Number(parentSidelineId) : null,
+        branchFen,
+        pgn,
+        description,
+      );
+    }
+  } catch {
     return { error: "Could not save the sideline." };
   }
 
@@ -216,12 +224,9 @@ export async function deleteSideline(
     return;
   }
 
-  const response = await fetch(`${process.env.API_URL}/api/games/${gameId}/sidelines/${sidelineId}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (!response.ok) {
+  try {
+    await deleteSidelineRecord(Number(sidelineId));
+  } catch {
     return { error: "Could not delete the sideline." };
   }
 

@@ -2,13 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getAccessToken = vi.fn();
 const redirect = vi.fn();
-const fetchMock = vi.fn();
 const createGameRecord = vi.fn();
 const publishGameRecord = vi.fn();
 const unpublishGameRecord = vi.fn();
 const createAnnotationRecord = vi.fn();
 const updateAnnotationTextRecord = vi.fn();
 const deleteAnnotationRecord = vi.fn();
+const createSidelineRecord = vi.fn();
+const updateSidelineRecord = vi.fn();
+const deleteSidelineRecord = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({ getAccessToken }));
 vi.mock("next/navigation", () => ({ redirect }));
@@ -22,7 +24,11 @@ vi.mock("@/lib/annotations", () => ({
   updateAnnotationText: updateAnnotationTextRecord,
   deleteAnnotation: deleteAnnotationRecord,
 }));
-vi.stubGlobal("fetch", fetchMock);
+vi.mock("@/lib/sidelines", () => ({
+  createSideline: createSidelineRecord,
+  updateSideline: updateSidelineRecord,
+  deleteSideline: deleteSidelineRecord,
+}));
 
 const revalidatePath = vi.fn();
 
@@ -57,7 +63,6 @@ const validFields = {
 beforeEach(() => {
   getAccessToken.mockReset();
   redirect.mockReset();
-  fetchMock.mockReset();
   revalidatePath.mockReset();
   createGameRecord.mockReset();
   publishGameRecord.mockReset();
@@ -65,6 +70,9 @@ beforeEach(() => {
   createAnnotationRecord.mockReset();
   updateAnnotationTextRecord.mockReset();
   deleteAnnotationRecord.mockReset();
+  createSidelineRecord.mockReset();
+  updateSidelineRecord.mockReset();
+  deleteSidelineRecord.mockReset();
 });
 
 describe("createGame", () => {
@@ -170,9 +178,34 @@ describe("saveAnnotation", () => {
       formData({ gameId: "1", fen: "startpos", annotationId: "", text: "Solid opening choice." }),
     );
 
-    expect(createAnnotationRecord).toHaveBeenCalledWith(1, "startpos", "Solid opening choice.");
+    expect(createAnnotationRecord).toHaveBeenCalledWith(1, "startpos", "Solid opening choice.", undefined);
     expect(revalidatePath).toHaveBeenCalledWith("/games/1");
     expect(result).toBeUndefined();
+  });
+
+  it("creates a sideline-context annotation when a sidelineId is given", async () => {
+    getAccessToken.mockResolvedValue("test-access-token");
+    createAnnotationRecord.mockResolvedValue({
+      id: 2,
+      gameId: 1,
+      fen: "startpos",
+      text: "Transposes to the main line.",
+      contextType: "SIDELINE",
+      sidelineId: 7,
+    });
+
+    await saveAnnotation(
+      undefined,
+      formData({
+        gameId: "1",
+        fen: "startpos",
+        annotationId: "",
+        text: "Transposes to the main line.",
+        sidelineId: "7",
+      }),
+    );
+
+    expect(createAnnotationRecord).toHaveBeenCalledWith(1, "startpos", "Transposes to the main line.", 7);
   });
 
   it("updates the annotation's text when an annotationId is given", async () => {
@@ -225,9 +258,16 @@ describe("saveAnnotation", () => {
 });
 
 describe("saveSideline", () => {
-  it("posts a new sideline when no sidelineId is given", async () => {
+  it("creates a new top-level sideline when no sidelineId is given", async () => {
     getAccessToken.mockResolvedValue("test-access-token");
-    fetchMock.mockResolvedValue(new Response(null, { status: 201 }));
+    createSidelineRecord.mockResolvedValue({
+      id: 7,
+      gameId: 1,
+      parentSidelineId: null,
+      branchFen: "startpos",
+      pgn: "2. Nc3 Nf6",
+      description: "A quieter alternative to Nf3.",
+    });
 
     const result = await saveSideline(
       undefined,
@@ -240,25 +280,28 @@ describe("saveSideline", () => {
       }),
     );
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/games/1/sidelines"),
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({ Authorization: "Bearer test-access-token" }),
-        body: JSON.stringify({
-          branchFen: "startpos",
-          pgn: "2. Nc3 Nf6",
-          description: "A quieter alternative to Nf3.",
-        }),
-      }),
+    expect(createSidelineRecord).toHaveBeenCalledWith(
+      1,
+      null,
+      "startpos",
+      "2. Nc3 Nf6",
+      "A quieter alternative to Nf3.",
     );
+    expect(updateSidelineRecord).not.toHaveBeenCalled();
     expect(revalidatePath).toHaveBeenCalledWith("/games/1");
     expect(result).toBeUndefined();
   });
 
   it("includes the parentSidelineId when creating a nested sideline", async () => {
     getAccessToken.mockResolvedValue("test-access-token");
-    fetchMock.mockResolvedValue(new Response(null, { status: 201 }));
+    createSidelineRecord.mockResolvedValue({
+      id: 8,
+      gameId: 1,
+      parentSidelineId: 3,
+      branchFen: "startpos",
+      pgn: "1... Nf6",
+      description: "",
+    });
 
     await saveSideline(
       undefined,
@@ -272,42 +315,37 @@ describe("saveSideline", () => {
       }),
     );
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/games/1/sidelines"),
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ branchFen: "startpos", pgn: "1... Nf6", description: "", parentSidelineId: 3 }),
-      }),
-    );
+    expect(createSidelineRecord).toHaveBeenCalledWith(1, 3, "startpos", "1... Nf6", "");
   });
 
-  it("puts to the sideline's own url when a sidelineId is given", async () => {
+  it("updates the existing sideline when a sidelineId is given", async () => {
     getAccessToken.mockResolvedValue("test-access-token");
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    updateSidelineRecord.mockResolvedValue({
+      id: 7,
+      gameId: 1,
+      parentSidelineId: null,
+      branchFen: "startpos",
+      pgn: "2. Nc3 Nf6",
+      description: "",
+    });
 
     await saveSideline(
       undefined,
       formData({ gameId: "1", sidelineId: "7", branchFen: "startpos", pgn: "2. Nc3 Nf6", description: "" }),
     );
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/games/1/sidelines/7"),
-      expect.objectContaining({
-        method: "PUT",
-        headers: expect.objectContaining({ Authorization: "Bearer test-access-token" }),
-        body: JSON.stringify({ pgn: "2. Nc3 Nf6", description: "" }),
-      }),
-    );
+    expect(updateSidelineRecord).toHaveBeenCalledWith(7, "2. Nc3 Nf6", "");
+    expect(createSidelineRecord).not.toHaveBeenCalled();
   });
 
-  it("rejects a blank pgn without calling the backend", async () => {
+  it("rejects a blank pgn without calling lib/sidelines", async () => {
     const result = await saveSideline(
       undefined,
       formData({ gameId: "1", sidelineId: "", branchFen: "startpos", pgn: "", description: "" }),
     );
 
     expect(result?.error).toBeTruthy();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(createSidelineRecord).not.toHaveBeenCalled();
   });
 
   it("redirects to /login when there is no access token", async () => {
@@ -319,12 +357,12 @@ describe("saveSideline", () => {
     );
 
     expect(redirect).toHaveBeenCalledWith("/login");
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(createSidelineRecord).not.toHaveBeenCalled();
   });
 
-  it("returns an error message when the backend rejects the request", async () => {
+  it("returns an error message when Supabase rejects the request", async () => {
     getAccessToken.mockResolvedValue("test-access-token");
-    fetchMock.mockResolvedValue(new Response(null, { status: 400 }));
+    createSidelineRecord.mockRejectedValue(new Error("boom"));
 
     const result = await saveSideline(
       undefined,
@@ -339,24 +377,18 @@ describe("saveSideline", () => {
 describe("deleteSideline", () => {
   it("deletes the sideline and revalidates the game page", async () => {
     getAccessToken.mockResolvedValue("test-access-token");
-    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    deleteSidelineRecord.mockResolvedValue(undefined);
 
     const result = await deleteSideline(undefined, formData({ gameId: "1", sidelineId: "7" }));
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/games/1/sidelines/7"),
-      expect.objectContaining({
-        method: "DELETE",
-        headers: expect.objectContaining({ Authorization: "Bearer test-access-token" }),
-      }),
-    );
+    expect(deleteSidelineRecord).toHaveBeenCalledWith(7);
     expect(revalidatePath).toHaveBeenCalledWith("/games/1");
     expect(result).toBeUndefined();
   });
 
-  it("returns an error message when the backend rejects the request", async () => {
+  it("returns an error message when Supabase rejects the request", async () => {
     getAccessToken.mockResolvedValue("test-access-token");
-    fetchMock.mockResolvedValue(new Response(null, { status: 400 }));
+    deleteSidelineRecord.mockRejectedValue(new Error("boom"));
 
     const result = await deleteSideline(undefined, formData({ gameId: "1", sidelineId: "7" }));
 

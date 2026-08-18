@@ -1,23 +1,41 @@
 import { createClient } from "@/lib/supabase/server";
 
+export type ContextType = "MAIN_LINE" | "SIDELINE";
+
 export type Annotation = {
   id: number;
   gameId: number;
   fen: string;
   text: string;
+  contextType: ContextType;
+  sidelineId: number | null;
 };
 
-const ANNOTATION_COLUMNS = "id, gameId:game_id, fen, text";
+type AnnotationRow = Omit<Annotation, "contextType"> & { contextType: "main_line" | "sideline" };
+
+const ANNOTATION_COLUMNS =
+  "id, gameId:game_id, fen, text, contextType:context_type, sidelineId:sideline_id";
+
+function toAnnotation(row: AnnotationRow): Annotation {
+  return { ...row, contextType: row.contextType === "sideline" ? "SIDELINE" : "MAIN_LINE" };
+}
 
 export async function createAnnotation(
   gameId: number,
   fen: string,
   text: string,
+  sidelineId?: number,
 ): Promise<Annotation> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("annotation")
-    .insert({ game_id: gameId, context_type: "main_line", fen, text })
+    .insert({
+      game_id: gameId,
+      context_type: sidelineId ? "sideline" : "main_line",
+      fen,
+      text,
+      ...(sidelineId ? { sideline_id: sidelineId } : {}),
+    })
     .select(ANNOTATION_COLUMNS)
     .single();
 
@@ -25,7 +43,7 @@ export async function createAnnotation(
     throw new Error("Could not save the annotation.");
   }
 
-  return data;
+  return toAnnotation(data);
 }
 
 export async function listAnnotationsByGame(gameId: number): Promise<Annotation[]> {
@@ -39,7 +57,7 @@ export async function listAnnotationsByGame(gameId: number): Promise<Annotation[
     throw new Error("Could not load the annotations.");
   }
 
-  return data;
+  return data.map(toAnnotation);
 }
 
 export async function updateAnnotationText(id: number, text: string): Promise<Annotation> {
@@ -55,7 +73,7 @@ export async function updateAnnotationText(id: number, text: string): Promise<An
     throw new Error("Could not save the annotation.");
   }
 
-  return data;
+  return toAnnotation(data);
 }
 
 export async function deleteAnnotation(id: number): Promise<void> {
